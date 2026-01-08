@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Taka Income Pro</title>
     
     <!-- Telegram SDK -->
@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart JS (Optional) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
@@ -18,10 +20,8 @@
             --bg-card: #FFFFFF;
             --text-main: #1F2937;
             --text-sub: #6B7280;
-            --primary-grad: linear-gradient(135deg, #8B5CF6 0%, #F472B6 100%); /* Purple to Pink/Orange */
+            --primary-grad: linear-gradient(135deg, #8B5CF6 0%, #F472B6 100%);
             --primary-color: #8B5CF6;
-            --danger: #EF4444;
-            --success: #10B981;
             --shadow: 0 4px 20px rgba(0,0,0,0.05);
             --radius: 20px;
         }
@@ -29,93 +29,90 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; background: var(--bg-body); color: var(--text-main); padding-bottom: 90px; }
 
-        /* HEADER */
-        .app-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 50; }
-        .user-info { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(45deg, #ddd, #eee); overflow: hidden; border: 2px solid var(--primary-color); }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .balance-badge { background: #EEF2FF; color: var(--primary-color); padding: 8px 15px; border-radius: 30px; font-weight: 700; display: flex; align-items: center; gap: 5px; font-size: 16px; }
+        /* LOADING SCREEN */
+        #loader { 
+            position: fixed; inset: 0; background: #fff; z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            transition: opacity 0.5s ease;
+        }
+        .spinner { width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* SECTIONS */
-        .page { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        /* HEADER */
+        .app-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 15px rgba(0,0,0,0.03); }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: #eee; border: 2px solid var(--primary-color); display:flex; align-items:center; justify-content:center; overflow:hidden;}
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .balance-badge { background: #EEF2FF; color: var(--primary-color); padding: 8px 15px; border-radius: 30px; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 15px; }
+
+        /* PAGES */
+        .page { display: none; padding: 20px; animation: fadeIn 0.4s ease; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* CARDS */
-        .card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
-        .card h3 { margin: 0 0 10px 0; font-size: 17px; display: flex; align-items: center; gap: 8px; }
-        .card p { color: var(--text-sub); font-size: 13px; margin: 0 0 15px 0; }
-
-        /* BUTTONS */
-        .btn-grad { width: 100%; padding: 14px; border: none; border-radius: 15px; background: var(--primary-grad); color: white; font-weight: 600; font-size: 15px; cursor: pointer; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3); transition: 0.2s; }
-        .btn-grad:active { transform: scale(0.98); }
-        .btn-grad:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+        .card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+        .card h3 { margin: 0 0 10px 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
         
+        /* BUTTONS */
+        .btn-grad { width: 100%; padding: 14px; border: none; border-radius: 15px; background: var(--primary-grad); color: white; font-weight: 600; font-size: 15px; cursor: pointer; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.25); transition: transform 0.1s; }
+        .btn-grad:active { transform: scale(0.98); }
+        .btn-grad:disabled { background: #ccc; box-shadow: none; opacity: 0.7; }
+
         .btn-outline { width: 48%; padding: 12px; border: 2px solid var(--primary-color); border-radius: 12px; background: transparent; color: var(--primary-color); font-weight: 600; cursor: pointer; }
         .btn-row { display: flex; justify-content: space-between; margin-top: 15px; }
 
         /* TASKS */
-        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
         .task-item:last-child { border-bottom: none; }
-        .task-icon { width: 40px; height: 40px; border-radius: 10px; background: #EEF2FF; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-size: 18px; margin-right: 12px; }
-        .task-info { flex: 1; }
-        .task-title { font-weight: 600; font-size: 14px; }
-        .task-reward { font-size: 12px; color: var(--primary-color); font-weight: 600; }
-        .task-btn { padding: 6px 15px; border-radius: 20px; border: none; background: #eee; color: #555; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .task-icon { width: 40px; height: 40px; border-radius: 12px; background: #EEF2FF; color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 12px; }
+        .task-title { font-weight: 600; font-size: 14px; color: var(--text-main); }
+        .task-reward { font-size: 12px; color: var(--primary-color); font-weight: 700; }
+        .task-btn { padding: 6px 14px; border-radius: 20px; border: none; background: #F3F4F6; color: #666; font-size: 12px; font-weight: 600; cursor: pointer; }
         .task-btn.active { background: var(--primary-color); color: white; }
 
-        /* LEADERBOARD (TOP) */
-        .toggle-switch { background: #EEF2FF; padding: 5px; border-radius: 15px; display: flex; margin-bottom: 20px; }
-        .toggle-btn { flex: 1; padding: 10px; border: none; border-radius: 12px; background: transparent; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .toggle-btn.active { background: var(--primary-grad); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        /* LEADERBOARD */
+        .toggle-switch { background: #EEF2FF; padding: 4px; border-radius: 14px; display: flex; margin-bottom: 25px; }
+        .toggle-btn { flex: 1; padding: 10px; border: none; border-radius: 12px; background: transparent; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .toggle-btn.active { background: var(--bg-card); color: var(--primary-color); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         .top-3 { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin-bottom: 30px; }
-        .rank-user { text-align: center; position: relative; }
-        .rank-avatar { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #FFD700; margin: 0 auto 5px; background: #ddd; }
-        .rank-1 .rank-avatar { width: 80px; height: 80px; border-color: #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
-        .rank-badge { position: absolute; bottom: 25px; right: 0; background: #FFD700; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .rank-user { text-align: center; position: relative; width: 33%; }
+        .rank-avatar { width: 55px; height: 55px; border-radius: 50%; border: 3px solid #FFD700; margin: 0 auto 8px; background: #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #888; font-size: 20px; }
+        .rank-1 .rank-avatar { width: 75px; height: 75px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); border-color: #FFD700; }
+        .rank-2 .rank-avatar { border-color: #C0C0C0; }
+        .rank-3 .rank-avatar { border-color: #CD7F32; }
         .crown { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 24px; color: #FFD700; }
 
-        .leader-list .item { display: flex; align-items: center; padding: 15px; background: white; margin-bottom: 8px; border-radius: 15px; }
-        .rank-num { width: 30px; font-weight: 700; color: var(--text-sub); }
-        
-        /* INVITE */
-        .invite-box { background: #F8FAFC; border: 1px dashed var(--primary-color); padding: 15px; border-radius: 15px; text-align: center; margin: 20px 0; font-family: monospace; color: var(--text-sub); font-size: 12px; word-break: break-all; }
-        .illustration { text-align: center; margin-bottom: 20px; }
-        .illustration i { font-size: 80px; background: -webkit-linear-gradient(#8B5CF6, #F472B6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        /* PAY / WITHDRAW */
-        .req-list { margin: 20px 0; }
-        .req-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F9FAFB; border-radius: 12px; margin-bottom: 8px; }
-        .req-text { font-size: 14px; font-weight: 500; }
-        .req-status { font-size: 16px; }
-
-        /* NAVIGATION BAR */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); border-top-left-radius: 20px; border-top-right-radius: 20px; z-index: 100; }
-        .nav-link { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #9CA3AF; cursor: pointer; transition: 0.2s; }
-        .nav-link i { font-size: 20px; }
+        /* NAV BAR */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-card); display: flex; justify-content: space-around; padding: 12px 0 20px 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); border-radius: 25px 25px 0 0; z-index: 100; }
+        .nav-link { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #9CA3AF; cursor: pointer; transition: 0.2s; width: 20%; }
+        .nav-link i { font-size: 22px; transition: 0.2s; }
         .nav-link span { font-size: 10px; font-weight: 500; }
         .nav-link.active { color: var(--primary-color); }
-        .nav-link.active i { transform: translateY(-2px); }
+        .nav-link.active i { transform: translateY(-3px); }
 
-        /* LOADING */
-        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* INVITE BOX */
+        .invite-box { background: #F0F9FF; border: 1px dashed #0EA5E9; padding: 15px; border-radius: 12px; color: #0284C7; font-size: 12px; word-break: break-all; margin: 20px 0; font-family: monospace; }
+
+        /* WITHDRAW STATUS */
+        .req-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F9FAFB; border-radius: 10px; margin-bottom: 8px; }
+        .req-status.done { color: #10B981; }
+        .req-status.fail { color: #EF4444; }
     </style>
 </head>
 <body>
 
-    <!-- LOADING -->
+    <!-- LOADING SCREEN -->
     <div id="loader">
         <div class="spinner"></div>
-        <p style="margin-top:15px; color:#888; font-size:14px;">Loading...</p>
+        <p style="margin-top:20px; font-weight:500; color:#555;">Starting App...</p>
     </div>
 
     <!-- HEADER -->
     <div class="app-header">
         <div class="user-info">
-            <div class="avatar" id="header-avatar"></div>
+            <div class="avatar" id="header-pic"><i class="fa-solid fa-user"></i></div>
             <div>
                 <div style="font-weight: 700; font-size: 15px;" id="header-name">Guest</div>
                 <div style="font-size: 11px; color: var(--text-sub);">Welcome back</div>
@@ -126,33 +123,28 @@
         </div>
     </div>
 
-    <!-- 1. HOME PAGE -->
-    <section id="home" class="page active">
-        <!-- Daily Ads Card -->
+    <!-- 1. HOME -->
+    <div id="home" class="page active">
         <div class="card">
             <h3 style="color:#EF4444;"><i class="fa-brands fa-youtube"></i> Daily Ads</h3>
-            <p>Watch short ads to earn.</p>
-            <button class="btn-grad" id="watch-ad-btn">Watch Ad (+0.001)</button>
+            <p>Watch short ads to earn points.</p>
+            <button class="btn-grad" id="watch-ad-btn">Watch Ad</button>
         </div>
 
-        <!-- Bonus Tasks -->
         <div class="card">
             <h3 style="color:#8B5CF6;"><i class="fa-solid fa-star"></i> Bonus Tasks</h3>
-            <div id="bonus-list">
-                <!-- Tasks injected by JS -->
-            </div>
+            <div id="bonus-list"></div>
         </div>
-        
-        <!-- Activity Chart -->
+
         <div class="card">
-            <h3><i class="fa-solid fa-chart-simple"></i> Activity</h3>
+            <h3><i class="fa-solid fa-chart-line"></i> Activity</h3>
             <canvas id="chart" height="100"></canvas>
         </div>
-    </section>
+    </div>
 
-    <!-- 2. TASKS PAGE -->
-    <section id="tasks" class="page">
-        <h2 style="margin-top:0;">Available Tasks</h2>
+    <!-- 2. TASKS -->
+    <div id="tasks" class="page">
+        <h2>Tasks</h2>
         <div class="card">
             <div class="task-item">
                 <div style="display:flex; align-items:center;">
@@ -162,140 +154,109 @@
                         <div class="task-reward">+0.005 USD</div>
                     </div>
                 </div>
-                <button class="task-btn active" id="join-channel-btn">Start</button>
+                <button class="task-btn active" onclick="doTask('join_ch')">Start</button>
             </div>
-            <!-- More tasks can be added here -->
         </div>
-    </section>
+    </div>
 
-    <!-- 3. LEADERBOARD (TOP) -->
-    <section id="top" class="page">
+    <!-- 3. TOP (LEADERBOARD) -->
+    <div id="top" class="page">
         <div class="toggle-switch">
-            <button class="toggle-btn active" onclick="switchLeaderboard('points')">By Points</button>
-            <button class="toggle-btn" onclick="switchLeaderboard('invite')">By Invite</button>
+            <button class="toggle-btn active" onclick="switchTab(this)">By Points</button>
+            <button class="toggle-btn" onclick="switchTab(this)">By Invite</button>
         </div>
-
-        <!-- Top 3 Visuals -->
+        
         <div class="top-3">
             <div class="rank-user rank-2">
-                <div class="rank-avatar"></div>
-                <div class="rank-badge">2</div>
-                <div style="font-size:12px; font-weight:600;">Alex</div>
-                <div style="font-size:10px; color:#888;">500 pts</div>
+                <div class="rank-avatar">2</div>
+                <div style="font-size:12px; font-weight:bold;">Alex</div>
+                <div style="font-size:10px;">500 pts</div>
             </div>
             <div class="rank-user rank-1">
                 <div class="crown"><i class="fa-solid fa-crown"></i></div>
-                <div class="rank-avatar"></div>
-                <div class="rank-badge">1</div>
-                <div style="font-size:12px; font-weight:600;">Sarah</div>
-                <div style="font-size:10px; color:#888;">1200 pts</div>
+                <div class="rank-avatar">1</div>
+                <div style="font-size:12px; font-weight:bold;">Sarah</div>
+                <div style="font-size:10px;">1200 pts</div>
             </div>
             <div class="rank-user rank-3">
-                <div class="rank-avatar"></div>
-                <div class="rank-badge">3</div>
-                <div style="font-size:12px; font-weight:600;">John</div>
-                <div style="font-size:10px; color:#888;">300 pts</div>
+                <div class="rank-avatar">3</div>
+                <div style="font-size:12px; font-weight:bold;">John</div>
+                <div style="font-size:10px;">300 pts</div>
             </div>
         </div>
 
-        <!-- List -->
-        <div class="leader-list">
-            <div class="item">
-                <div class="rank-num">4</div>
-                <div class="avatar" style="width:35px; height:35px; margin-right:10px;"></div>
-                <div style="flex:1; font-weight:600; font-size:14px;">User 8842</div>
-                <div style="font-weight:700; color:var(--primary-color);">165 pts</div>
+        <div class="card" style="padding:10px;">
+            <div class="task-item">
+                <span style="width:30px; font-weight:bold; text-align:center;">4</span>
+                <div class="task-info" style="margin-left:10px;">User 992</div>
+                <span style="font-weight:bold; color:var(--primary-color);">150 pts</span>
             </div>
-            <div class="item">
-                <div class="rank-num">5</div>
-                <div class="avatar" style="width:35px; height:35px; margin-right:10px;"></div>
-                <div style="flex:1; font-weight:600; font-size:14px;">User 1290</div>
-                <div style="font-weight:700; color:var(--primary-color);">10 pts</div>
+            <div class="task-item">
+                <span style="width:30px; font-weight:bold; text-align:center;">5</span>
+                <div class="task-info" style="margin-left:10px;">User 101</div>
+                <span style="font-weight:bold; color:var(--primary-color);">90 pts</span>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- 4. INVITE PAGE -->
-    <section id="invite" class="page">
+    <!-- 4. INVITE -->
+    <div id="invite" class="page">
         <div class="card" style="text-align:center;">
-            <div class="illustration"><i class="fa-solid fa-gift"></i></div>
-            <h2 style="margin:0;">Invite & Earn</h2>
-            <p>Earn <span style="color:var(--primary-color); font-weight:700;">$0.01</span> for every friend.</p>
+            <i class="fa-solid fa-gift" style="font-size:50px; color:#F472B6; margin-bottom:15px;"></i>
+            <h2>Invite & Earn</h2>
+            <p>Get <b style="color:var(--primary-color);">$0.01</b> for each friend.</p>
             
-            <div class="invite-box" id="invite-link-box">Loading Link...</div>
+            <div class="invite-box" id="ref-link-box">Loading...</div>
             
             <div class="btn-row">
-                <button class="btn-grad" onclick="copyLink()" style="width:48%"><i class="fa-regular fa-copy"></i> Copy</button>
-                <button class="btn-outline" onclick="shareLink()"><i class="fa-solid fa-share"></i> Share</button>
+                <button class="btn-grad" style="width:48%" onclick="copyRef()">Copy</button>
+                <button class="btn-outline" style="width:48%" onclick="shareRef()">Share</button>
             </div>
         </div>
+        <h3>My Invites (<span id="total-refs">0</span>)</h3>
+        <div class="card" style="text-align:center; padding:30px; color:#aaa;">No invites yet</div>
+    </div>
 
-        <h3 style="margin-left:5px;">My Invites (<span id="total-refs">0</span>)</h3>
-        <div class="card" style="text-align:center; padding:40px;">
-            <p style="margin:0;">No invites yet.</p>
-        </div>
-    </section>
-
-    <!-- 5. PAY (WITHDRAW) PAGE -->
-    <section id="pay" class="page">
-        <h2 style="margin-top:0;">Withdrawal</h2>
-        
+    <!-- 5. PAY (WITHDRAW) -->
+    <div id="pay" class="page">
+        <h2>Withdrawal</h2>
         <div class="card">
-            <h3>Requirements for Next Withdraw</h3>
-            <div class="req-list">
-                <div class="req-item">
-                    <div class="req-text">Invites (<span id="req-invite">0</span>/2)</div>
-                    <div class="req-status" id="icon-invite">❌</div>
-                </div>
-                <div class="req-item">
-                    <div class="req-text">Ads Watched (<span id="req-ads">0</span>/10)</div>
-                    <div class="req-status" id="icon-ads">❌</div>
-                </div>
-                <div class="req-item">
-                    <div class="req-text">Bonus Tasks (1/2)</div>
-                    <div class="req-status" style="color:var(--success);">✔</div>
-                </div>
+            <h3>Requirements</h3>
+            <div class="req-item">
+                <span>Invites (<span id="req-inv">0</span>/2)</span>
+                <i class="fa-solid fa-xmark req-status fail" id="icon-inv"></i>
             </div>
-            
-            <button class="btn-grad" id="unlock-btn" disabled style="background:#ccc; box-shadow:none;">Locked</button>
+            <div class="req-item">
+                <span>Ads Watched (<span id="req-ads">0</span>/10)</span>
+                <i class="fa-solid fa-xmark req-status fail" id="icon-ads"></i>
+            </div>
+            <div class="req-item">
+                <span>Bonus Tasks (1/2)</span>
+                <i class="fa-solid fa-check req-status done"></i>
+            </div>
+            <button class="btn-grad" id="unlock-btn" disabled style="background:#ddd; margin-top:10px;">Locked</button>
         </div>
 
-        <!-- Hidden Withdraw Form (Shown when unlocked) -->
-        <div class="card" id="withdraw-section" style="display:none;">
+        <div class="card" id="withdraw-form" style="display:none;">
             <h3>Request Payment</h3>
-            <select id="w-method" style="width:100%; padding:12px; margin-bottom:10px; border-radius:12px; border:1px solid #eee;">
+            <select id="w-method" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:10px;">
                 <option>Binance UID</option>
                 <option>Bikash</option>
                 <option>Nogad</option>
             </select>
-            <input id="w-account" placeholder="Enter Wallet/ID" style="width:100%; padding:12px; margin-bottom:10px; border-radius:12px; border:1px solid #eee;">
-            <input id="w-amount" type="number" placeholder="Amount USD" style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #eee;">
+            <input id="w-account" placeholder="Enter Wallet/ID" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:10px;">
+            <input id="w-amount" type="number" placeholder="Amount (USD)" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:10px;">
             <button class="btn-grad" onclick="submitWithdraw()">Submit Request</button>
         </div>
-    </section>
+    </div>
 
-    <!-- NAVIGATION BAR -->
+    <!-- BOTTOM NAV -->
     <nav class="bottom-nav">
-        <button class="nav-link active" onclick="nav('home', this)">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </button>
-        <button class="nav-link" onclick="nav('tasks', this)">
-            <i class="fa-solid fa-list-check"></i>
-            <span>Tasks</span>
-        </button>
-        <button class="nav-link" onclick="nav('top', this)">
-            <i class="fa-solid fa-trophy"></i>
-            <span>Top</span>
-        </button>
-        <button class="nav-link" onclick="nav('invite', this)">
-            <i class="fa-solid fa-user-group"></i>
-            <span>Invite</span>
-        </button>
-        <button class="nav-link" onclick="nav('pay', this)">
-            <i class="fa-solid fa-wallet"></i>
-            <span>Pay</span>
-        </button>
+        <button class="nav-link active" onclick="nav('home', this)"><i class="fa-solid fa-house"></i><span>Home</span></button>
+        <button class="nav-link" onclick="nav('tasks', this)"><i class="fa-solid fa-list-check"></i><span>Tasks</span></button>
+        <button class="nav-link" onclick="nav('top', this)"><i class="fa-solid fa-trophy"></i><span>Top</span></button>
+        <button class="nav-link" onclick="nav('invite', this)"><i class="fa-solid fa-user-plus"></i><span>Invite</span></button>
+        <button class="nav-link" onclick="nav('pay', this)"><i class="fa-solid fa-wallet"></i><span>Pay</span></button>
     </nav>
 
     <script>
@@ -304,62 +265,57 @@
             DB_URL: "https://data-myfa.vercel.app/api/db/bot",
             DB_KEY: "QLE3KvEiqW29j269",
             BOT_USERNAME: "Yichuwatchrobot",
-            MIN_INVITES_REQ: 2,  // Requirement to unlock withdraw
-            MIN_ADS_REQ: 10      // Requirement to unlock withdraw
+            MIN_INVITE: 2,
+            MIN_ADS: 10
         };
 
-        // --- APP STATE ---
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        const user = tg.initDataUnsafe.user || { id: "12345", first_name: "Demo", photo_url: "" };
+        tg.expand(); 
+
+        const user = tg.initDataUnsafe.user || { id: "12345", first_name: "Guest", photo_url: "" };
         const userId = user.id.toString();
 
-        let state = {
-            balance: 0,
-            ads: 0,
-            refs: 0,
-            bonus: []
-        };
+        let state = { balance: 0, ads: 0, refs: 0, bonus: [] };
         let settings = { adReward: 0.001, zoneId: "" };
 
-        // --- NAVIGATION LOGIC ---
-        function nav(pageId, btn) {
-            // Change Active Tab
+        // --- APP LOGIC ---
+        function nav(page, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            
-            // Change Icon Color
+            document.getElementById(page).classList.add('active');
             document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
-            // Refresh specific data
-            if(pageId === 'pay') checkRequirements();
+            if(page === 'pay') checkRequirements();
         }
 
-        // --- INITIALIZATION ---
-        async function init() {
-            // Set Header Info
-            document.getElementById('header-name').innerText = user.first_name;
-            if(user.photo_url) document.getElementById('header-avatar').innerHTML = `<img src="${user.photo_url}">`;
-            
-            // Setup Invite Link
-            document.getElementById('invite-link-box').innerText = `https://t.me/${CONFIG.BOT_USERNAME}?start=${userId}`;
+        function switchTab(btn) {
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
 
-            // Load Data
+        async function init() {
+            // Force Remove Loader after 3s (The FIX)
+            setTimeout(() => document.getElementById('loader').style.opacity = '0', 2500);
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 3000);
+
+            // Render Basic Info immediately
+            document.getElementById('header-name').innerText = user.first_name;
+            if(user.photo_url) document.getElementById('header-pic').innerHTML = `<img src="${user.photo_url}">`;
+            document.getElementById('ref-link-box').innerText = `https://t.me/${CONFIG.BOT_USERNAME}?start=${userId}`;
+
             try {
-                // Settings
-                const sRes = await fetch(`${CONFIG.DB_URL}/config/settings`, {headers:{"x-secret-key":CONFIG.DB_KEY}});
+                // Fetch Settings
+                let sRes = await fetch(`${CONFIG.DB_URL}/config/settings`, {headers:{"x-secret-key":CONFIG.DB_KEY}});
                 if(sRes.ok) {
-                    const s = await sRes.json();
+                    let s = await sRes.json();
                     settings.adReward = parseFloat(s.adReward || 0.001);
                     settings.zoneId = s.adZoneId;
                     if(settings.zoneId) loadMonetag(settings.zoneId);
                 }
 
-                // User
-                const uRes = await fetch(`${CONFIG.DB_URL}/users/${userId}`, {headers:{"x-secret-key":CONFIG.DB_KEY}});
+                // Fetch User
+                let uRes = await fetch(`${CONFIG.DB_URL}/users/${userId}`, {headers:{"x-secret-key":CONFIG.DB_KEY}});
                 if(uRes.ok) {
-                    const d = await uRes.json();
+                    let d = await uRes.json();
                     if(d.id) {
                         state.balance = d.balance || 0;
                         state.ads = d.adCount || d.adsWatched || 0;
@@ -367,18 +323,18 @@
                         state.bonus = d.bonusTasks || [];
                     }
                 } else {
-                    // Register User
+                    // Create User if new
                     fetch(`${CONFIG.DB_URL}/users/${userId}`, {
                         method: 'POST',
                         headers: {'Content-Type':'application/json', "x-secret-key":CONFIG.DB_KEY},
                         body: JSON.stringify({id:userId, firstName:user.first_name, balance:0, adCount:0, referrals:0})
                     });
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) { console.log("Init Error (Ignored for UI safety):", e); }
 
             updateUI();
-            renderBonusTasks();
-            document.getElementById('loader').style.display = 'none';
+            renderBonus();
+            drawChart();
         }
 
         function updateUI() {
@@ -386,12 +342,12 @@
             document.getElementById('total-refs').innerText = state.refs;
             document.getElementById('watch-ad-btn').innerText = `Watch Ad (+${settings.adReward})`;
             
-            // Update Requirement Texts
-            document.getElementById('req-invite').innerText = state.refs;
+            // Requirements
+            document.getElementById('req-inv').innerText = state.refs;
             document.getElementById('req-ads').innerText = state.ads;
         }
 
-        // --- ADS LOGIC ---
+        // --- ADS ---
         function loadMonetag(zone) {
             const s = document.createElement('script');
             s.src = "//libtl.com/sdk.js";
@@ -408,40 +364,40 @@
                     state.ads++;
                     saveData();
                     updateUI();
-                    tg.showAlert("Reward Added!");
+                    tg.showAlert("Success! Points Added.");
                 });
             } else {
-                tg.showAlert("Ad loading... please wait");
+                tg.showAlert("Ad loading... please wait.");
             }
         };
 
-        // --- BONUS TASKS ---
-        const tasks = [
+        // --- TASKS ---
+        const bonusTasks = [
             { id: 't1', title: 'Join Channel', reward: 0.005, link: 'https://t.me/BasicTouchPro' },
             { id: 't2', title: 'Follow Owner', reward: 0.002, link: 'https://t.me/BasicTouch' }
         ];
 
-        function renderBonusTasks() {
+        function renderBonus() {
             const list = document.getElementById('bonus-list');
             list.innerHTML = '';
-            tasks.forEach(t => {
+            bonusTasks.forEach(t => {
                 const isDone = state.bonus.includes(t.id);
                 list.innerHTML += `
                 <div class="task-item">
-                    <div class="task-icon" style="background:#F3E8FF; color:#8B5CF6;"><i class="fa-brands fa-telegram"></i></div>
+                    <div class="task-icon"><i class="fa-solid fa-star"></i></div>
                     <div class="task-info">
                         <div class="task-title">${t.title}</div>
                         <div class="task-reward">+${t.reward}</div>
                     </div>
-                    <button class="task-btn ${isDone ? '' : 'active'}" onclick="doTask('${t.id}')" ${isDone ? 'disabled' : ''}>
-                        ${isDone ? 'Done' : 'Do'}
+                    <button class="task-btn ${isDone?'':'active'}" onclick="doTask('${t.id}')" ${isDone?'disabled':''}>
+                        ${isDone?'Done':'Do'}
                     </button>
                 </div>`;
             });
         }
 
         window.doTask = (tid) => {
-            const t = tasks.find(x => x.id === tid);
+            const t = bonusTasks.find(x => x.id === tid) || { link: 'https://t.me/BasicTouchPro', reward: 0.005 };
             tg.openTelegramLink(t.link);
             setTimeout(() => {
                 if(!state.bonus.includes(tid)) {
@@ -449,46 +405,36 @@
                     state.bonus.push(tid);
                     saveData();
                     updateUI();
-                    renderBonusTasks();
+                    renderBonus();
                 }
             }, 5000);
-        };
-
-        document.getElementById('join-channel-btn').onclick = () => tg.openTelegramLink('https://t.me/BasicTouchPro');
+        }
 
         // --- WITHDRAW LOGIC ---
         function checkRequirements() {
-            const inviteDone = state.refs >= CONFIG.MIN_INVITES_REQ;
-            const adsDone = state.ads >= CONFIG.MIN_ADS_REQ;
+            const invDone = state.refs >= CONFIG.MIN_INVITE;
+            const adsDone = state.ads >= CONFIG.MIN_ADS;
+            
+            document.getElementById('icon-inv').className = invDone ? 'fa-solid fa-check req-status done' : 'fa-solid fa-xmark req-status fail';
+            document.getElementById('icon-ads').className = adsDone ? 'fa-solid fa-check req-status done' : 'fa-solid fa-xmark req-status fail';
 
-            // Update Icons
-            document.getElementById('icon-invite').innerHTML = inviteDone ? '<span style="color:#10B981">✔</span>' : '❌';
-            document.getElementById('icon-ads').innerHTML = adsDone ? '<span style="color:#10B981">✔</span>' : '❌';
-
-            const btn = document.getElementById('unlock-btn');
-            const section = document.getElementById('withdraw-section');
-
-            if(inviteDone && adsDone) {
-                btn.style.display = 'none';
-                section.style.display = 'block';
-            } else {
-                btn.style.display = 'block';
-                section.style.display = 'none';
+            if(invDone && adsDone) {
+                document.getElementById('unlock-btn').style.display = 'none';
+                document.getElementById('withdraw-form').style.display = 'block';
             }
         }
 
         window.submitWithdraw = async () => {
             const amt = parseFloat(document.getElementById('w-amount').value);
             if(amt > state.balance) return tg.showAlert("Insufficient Balance");
-            if(amt < 0.10) return tg.showAlert("Min withdraw $0.10");
+            if(amt < 0.10) return tg.showAlert("Minimum $0.10");
 
             state.balance -= amt;
             saveData();
             updateUI();
 
-            // Send to Backend
             await fetch('/api/bot', {
-                method: 'POST', 
+                method: 'POST',
                 headers: {'Content-Type':'application/json'},
                 body: JSON.stringify({
                     action: 'withdraw',
@@ -498,13 +444,12 @@
                     account: document.getElementById('w-account').value
                 })
             });
-            
             tg.showAlert("Request Sent!");
         };
 
         // --- HELPERS ---
         async function saveData() {
-            await fetch(`${CONFIG.DB_URL}/users/${userId}`, {
+            fetch(`${CONFIG.DB_URL}/users/${userId}`, {
                 method: 'POST',
                 headers: {'Content-Type':'application/json', "x-secret-key":CONFIG.DB_KEY},
                 body: JSON.stringify({
@@ -518,42 +463,36 @@
             });
         }
 
-        window.copyLink = () => {
+        window.copyRef = () => {
             navigator.clipboard.writeText(`https://t.me/${CONFIG.BOT_USERNAME}?start=${userId}`);
-            tg.showAlert("Link Copied!");
+            tg.showAlert("Copied!");
         };
-        window.shareLink = () => {
+        window.shareRef = () => {
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${CONFIG.BOT_USERNAME}?start=${userId}`)}`);
         };
 
-        // Chart (Dummy Data for visual)
-        const ctx = document.getElementById('chart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
-                datasets: [{
-                    label: 'Earnings',
-                    data: [0.01, 0.03, 0.02, 0.05, 0.04, 0.06, 0.08],
-                    borderColor: '#8B5CF6',
-                    tension: 0.4,
-                    fill: false
-                }]
-            },
-            options: { plugins: {legend:{display:false}}, scales:{x:{display:false}, y:{display:false}} }
-        });
+        function drawChart() {
+            // Optional: Only draws if Chart.js loaded
+            if(typeof Chart === 'undefined') return;
+            new Chart(document.getElementById('chart'), {
+                type: 'line',
+                data: {
+                    labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                    datasets: [{
+                        label: 'Earnings',
+                        data: [0, 0.01, 0.03, 0.02, 0.05, 0.04, 0.01],
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { plugins: {legend:false}, scales: {x:{display:false}, y:{display:false}} }
+            });
+        }
 
-        // Toggle Leaderboard Visuals
-        window.switchLeaderboard = (type) => {
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            // Logic to switch list content would go here
-        };
-
-        // Start
+        // START
         window.onload = init;
-        setTimeout(() => document.getElementById('loader').style.display='none', 4000); // Failsafe
-
     </script>
 </body>
 </html>
