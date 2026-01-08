@@ -4,8 +4,8 @@ const TelegramBot = require('node-telegram-bot-api');
 // ----------------------------------------------------
 // 👇 HARDCODE CONFIGURATION 👇
 // ----------------------------------------------------
-const TOKEN = "YOUR_BOT_TOKEN_HERE"; 
-const ADMIN_ID = "YOUR_TELEGRAM_USER_ID"; // For withdrawal alerts
+const TOKEN = "8529929285:AAHwfWLGT7WKSyuZn_Zybs0PWx6a-FjLddI"; 
+const ADMIN_ID = "6464599036"; // For withdrawal alerts
 const WEBAPP_URL = "https://your-project.vercel.app"; 
 
 // YOUR CUSTOM DATABASE CONFIG
