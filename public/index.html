@@ -4,319 +4,295 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Taka Income Pro</title>
-
-    <!-- Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
+        /* ORIGINAL DESIGN CSS */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap');
-        :root { --primary: #007AFF; --bg: #F0F2F5; --card: #FFFFFF; --text: #1D1D1F; }
-        [data-theme="dark"] { --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7; }
+        :root { --primary-color: #007AFF; --background-color: #F0F2F5; --card-background: #FFFFFF; --text-color: #1D1D1F; }
+        [data-theme="dark"] { --primary-color: #0A84FF; --background-color: #000000; --card-background: #1C1C1E; --text-color: #F5F5F7; }
         
-        body { font-family: 'Noto Sans', sans-serif; margin: 0; padding: 15px; background: var(--bg); color: var(--text); padding-bottom: 80px; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        /* PRELOADER */
-        #preloader { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
-        .loader-spin { font-size: 40px; color: var(--primary); animation: spin 1s infinite linear; margin-bottom: 15px; }
+        body { font-family: 'Noto Sans', sans-serif; margin: 0; padding: 20px; background-color: var(--background-color); color: var(--text-color); transition: 0.3s; }
+        .container { max-width: 500px; margin: 0 auto; display: none; }
+        
+        /* Preloader */
+        #preloader { position: fixed; inset: 0; background: var(--background-color); z-index: 99; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .spinner { font-size: 40px; color: var(--primary-color); animation: spin 1s infinite linear; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* UI ELEMENTS */
-        .container { max-width: 500px; margin: 0 auto; display: none; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .avatar { width: 45px; height: 45px; background: #ccc; border-radius: 50%; overflow: hidden; display:flex; align-items:center; justify-content:center; font-size:20px;}
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-        .balance-card { background: linear-gradient(135deg, var(--primary), #0056B3); color: white; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 10px 20px rgba(0,122,255,0.3); }
-        .balance-amount { font-size: 38px; font-weight: 800; margin-top: 5px; }
-
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; }
-        .stat-val { font-size: 20px; font-weight: 700; }
-        .stat-label { font-size: 12px; opacity: 0.7; }
-
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--primary); color: white; font-weight: 600; font-size: 16px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn:active { transform: scale(0.98); }
-        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-
-        /* NAVBAR */
-        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); padding: 10px; display: flex; justify-content: space-around; border-top: 1px solid #ccc; z-index: 100; }
-        .nav-item { border: none; background: none; color: var(--text); opacity: 0.6; font-size: 10px; display: flex; flex-direction: column; align-items: center; }
-        .nav-item i { font-size: 20px; margin-bottom: 3px; }
-        .nav-item.active { opacity: 1; color: var(--primary); }
-
-        /* MODAL */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: flex-end; }
-        .modal-content { background: var(--card); width: 100%; border-radius: 20px 20px 0 0; padding: 25px; animation: slideUp 0.3s; }
-        @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: var(--bg); border: 1px solid #ccc; border-radius: 10px; color: var(--text); }
+        /* Profile & Balance */
+        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        #profile-pic { width: 50px; height: 50px; border-radius: 50%; background: #ccc; display:flex; align-items:center; justify-content:center; overflow:hidden;} 
+        #profile-pic img { width:100%; height:100%; object-fit:cover; }
         
-        #ad-loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); color: white; z-index: 5000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .balance-card { background: linear-gradient(135deg, var(--primary-color), #0056B3); color: white; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,122,255,0.3); }
+        .amount { font-size: 42px; font-weight: 800; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-item { background: var(--card-background); padding: 15px; border-radius: 15px; text-align: center; }
+        .value { font-size: 18px; font-weight: 700; }
+        .label { font-size: 11px; opacity: 0.7; }
+
+        /* Actions */
+        .card { background: var(--card-background); padding: 20px; border-radius: 18px; margin-bottom: 80px; }
+        .action-button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--primary-color); color: white; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 10px; display:flex; align-items:center; justify-content:center; gap:8px;}
+        .secondary { background: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); }
+
+        /* Navbar */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-background); padding: 10px; display: flex; justify-content: space-around; border-top: 1px solid #ddd; }
+        .nav-button { background: none; border: none; color: var(--text-color); opacity: 0.6; display: flex; flex-direction: column; align-items: center; font-size: 10px; }
+        .nav-button.active { opacity: 1; color: var(--primary-color); }
+        .nav-button i { font-size: 20px; margin-bottom: 4px; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
+        .modal-content { background: var(--card-background); width: 100%; padding: 25px; border-radius: 25px 25px 0 0; animation: slideUp 0.3s; }
+        @keyframes slideUp { from {transform:translateY(100%)} to {transform:translateY(0)} }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: var(--background-color); border: 1px solid #ddd; border-radius: 10px; color: var(--text-color); }
     </style>
 </head>
 <body>
 
-    <!-- LOADING SCREEN -->
+    <!-- Preloader -->
     <div id="preloader">
-        <i class="fa-solid fa-spinner loader-spin"></i>
-        <div id="loading-text" style="font-weight: bold;">Loading... 0%</div>
+        <i class="fa-solid fa-spinner spinner"></i>
+        <p style="margin-top:10px; font-weight:bold;">Loading...</p>
     </div>
 
-    <!-- AD LOADER -->
-    <div id="ad-loader">
-        <i class="fa-solid fa-circle-notch loader-spin"></i>
-        <div>Loading Advertisement...</div>
-    </div>
-
-    <!-- MAIN APP -->
+    <!-- Main Content -->
     <div class="container">
-        <div class="header">
-            <div class="avatar" id="avatar"></div>
+        <div class="profile-header">
+            <div id="profile-pic"></div>
             <div>
-                <div style="font-size: 18px; font-weight: 700;" id="username">Guest</div>
-                <div style="font-size: 12px; opacity: 0.7;" id="userid">ID: ...</div>
+                <h2 style="margin:0;" id="greeting">Welcome</h2>
+                <small id="user-id">ID: ...</small>
             </div>
         </div>
 
         <div class="balance-card">
-            <div>Total Balance</div>
-            <div class="balance-amount" id="balance">$0.000</div>
+            <small>Current Balance</small>
+            <div class="amount" id="total-earning">$0.000</div>
         </div>
 
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-val" id="ads-count">0</div>
-                <div class="stat-label">Ads Watched</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <i class="fa-solid fa-play" style="color:var(--primary-color)"></i>
+                <div class="value" id="ad-count">0</div>
+                <div class="label">Ads</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-val" id="ref-count">0</div>
-                <div class="stat-label">Referrals</div>
+            <div class="stat-item">
+                <i class="fa-solid fa-users" style="color:var(--primary-color)"></i>
+                <div class="value" id="referral-count">0</div>
+                <div class="label">Refs</div>
+            </div>
+            <div class="stat-item">
+                <i class="fa-solid fa-coins" style="color:var(--primary-color)"></i>
+                <div class="value" id="rate-display">$0.001</div>
+                <div class="label">Rate</div>
             </div>
         </div>
 
-        <button class="btn" id="watch-btn"><i class="fa-solid fa-play"></i> Watch Ad ($0.001)</button>
-        <button class="btn btn-outline" onclick="openLink('https://t.me/BasicTouchPro')"><i class="fa-brands fa-telegram"></i> Join Channel</button>
-        
-        <div style="margin-top: 20px;">
-            <h3>Weekly Stats</h3>
+        <div class="card">
+            <h3>Tasks</h3>
+            <button class="action-button" id="watch-btn"><i class="fa-solid fa-play"></i> Watch Ad</button>
+            <button class="action-button secondary" id="join-btn"><i class="fa-brands fa-telegram"></i> Join Channel</button>
+            
+            <h3 style="margin-top:20px;">Weekly Activity</h3>
             <canvas id="chart" height="150"></canvas>
         </div>
     </div>
 
-    <!-- NAVIGATION -->
-    <div class="nav">
-        <button class="nav-item active" onclick="closeModals()"><i class="fa-solid fa-home"></i> Home</button>
-        <button class="nav-item" onclick="openModal('withdraw')"><i class="fa-solid fa-wallet"></i> Withdraw</button>
-        <button class="nav-item" onclick="openModal('invite')"><i class="fa-solid fa-users"></i> Invite</button>
+    <!-- Navigation -->
+    <div class="nav-bar">
+        <button class="nav-button active" onclick="closeModals()"><i class="fa-solid fa-home"></i> Home</button>
+        <button class="nav-button" onclick="openModal('withdraw')"><i class="fa-solid fa-wallet"></i> Withdraw</button>
+        <button class="nav-button" onclick="openModal('invite')"><i class="fa-solid fa-user-plus"></i> Invite</button>
     </div>
 
-    <!-- WITHDRAW MODAL -->
-    <div id="modal-withdraw" class="modal">
+    <!-- Withdraw Modal -->
+    <div id="withdraw-modal" class="modal">
         <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3>Withdraw</h3>
-                <i class="fa-solid fa-xmark" onclick="closeModals()" style="font-size: 24px;"></i>
+            <div style="display:flex; justify-content:space-between;">
+                <h3>Withdraw Funds</h3>
+                <span onclick="closeModals()" style="font-size:24px;">&times;</span>
             </div>
-            <p>Min Withdraw: <b>$0.10</b></p>
+            <p id="min-withdraw-txt">Min Withdraw: $0.10</p>
             <form id="withdraw-form">
                 <select id="w-method">
                     <option>Binance UID</option>
                     <option>Bikash</option>
                     <option>Nogad</option>
                 </select>
-                <input id="w-account" placeholder="Wallet / Number" required>
+                <input id="w-account" placeholder="Account Number / ID" required>
                 <input type="number" id="w-amount" placeholder="Amount (USD)" step="0.001" required>
-                <button type="submit" class="btn">Confirm Request</button>
+                <button class="action-button">Request Payment</button>
             </form>
         </div>
     </div>
 
-    <!-- INVITE MODAL -->
-    <div id="modal-invite" class="modal">
+    <!-- Invite Modal -->
+    <div id="invite-modal" class="modal">
         <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between;">
                 <h3>Invite Friends</h3>
-                <i class="fa-solid fa-xmark" onclick="closeModals()" style="font-size: 24px;"></i>
+                <span onclick="closeModals()" style="font-size:24px;">&times;</span>
             </div>
-            <p align="center">Earn <b>$0.01</b> per referral!</p>
-            <input id="ref-link" readonly onclick="copyRef()">
-            <button class="btn" onclick="copyRef()">Copy Link</button>
+            <p>Earn Rewards for every friend!</p>
+            <input id="ref-link" readonly>
+            <button class="action-button" onclick="copyRef()">Copy Link</button>
         </div>
     </div>
 
     <script>
-        // ===================================
-        // ⚙️ CONFIGURATION
-        // ===================================
-        const CONFIG = {
-            DB_URL: "https://data-myfa.vercel.app/api/db/bot",
-            DB_KEY: "QLE3KvEiqW29j269",
-            BOT_USERNAME: "BasicTouchProBot", // No @
-            MONETAG_ZONE: "YOUR_MONETAG_ZONE_ID_HERE", 
-            MIN_WITHDRAW: 0.10,
-            AD_REWARD: 0.001
-        };
+        // --- SETUP ---
+        const DB_URL = "https://data-myfa.vercel.app/api/db/bot";
+        const DB_KEY = "QLE3KvEiqW29j269";
+        const BOT_USERNAME = "Yichuwatchrobot"; 
 
-        // --- INIT ---
         const tg = window.Telegram.WebApp;
-        tg.expand(); 
+        tg.expand();
+        
+        // Theme
+        if(tg.colorScheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
-        const user = tg.initDataUnsafe.user || { id: "12345", first_name: "Guest", username: "guest" };
+        const user = tg.initDataUnsafe.user || { id: "123456", first_name: "Demo", username: "demo", photo_url: "" };
         const userId = user.id.toString();
 
-        let state = { id: userId, balance: 0, ads: 0, refs: 0 };
+        let appSettings = {};
+        let userData = { id: userId, balance: 0, ads: 0, refs: 0 };
 
-        // DOM Elements
-        const el = {
-            preloader: document.getElementById('preloader'),
-            container: document.querySelector('.container'),
-            balance: document.getElementById('balance'),
-            ads: document.getElementById('ads-count'),
-            refs: document.getElementById('ref-count'),
-            loadingText: document.getElementById('loading-text')
-        };
-
-        // --- FUNCTIONS ---
-
+        // --- CORE FUNCTIONS ---
+        
         async function init() {
-            // Setup Profile
-            document.getElementById('username').innerText = user.first_name;
-            document.getElementById('userid').innerText = "ID: " + userId;
-            document.getElementById('ref-link').value = `https://t.me/${CONFIG.BOT_USERNAME}?start=${userId}`;
-            if(user.photo_url) document.getElementById('avatar').innerHTML = `<img src="${user.photo_url}">`;
-            else document.getElementById('avatar').innerText = user.first_name.charAt(0);
-
-            // Load Monetag
-            const s = document.createElement('script');
-            s.src = "//libtl.com/sdk.js";
-            s.dataset.zone = CONFIG.MONETAG_ZONE;
-            s.dataset.sdk = `show_${CONFIG.MONETAG_ZONE}`;
-            document.head.appendChild(s);
-
-            // Fetch Data
+            // 1. Load Settings (Global)
             try {
-                const res = await fetch(`${CONFIG.DB_URL}/users/${userId}`, {
-                    headers: { "x-secret-key": CONFIG.DB_KEY }
-                });
-                if(res.ok) {
-                    const data = await res.json();
-                    if(data.id) state = { ...state, ...data };
-                } else {
-                    saveData(); // Create new
+                const s = await fetch(`${DB_URL}/config/settings`, { headers: { "x-secret-key": DB_KEY } });
+                if(s.ok) appSettings = await s.json();
+                
+                // Defaults if DB empty
+                if(!appSettings.adZoneId) {
+                    appSettings = { adZoneId: "YOUR_ZONE", adReward: 0.001, minWithdraw: 0.10, channelUrl: "https://t.me/BasicTouchPro" };
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) { console.log(e); }
 
-            updateUI();
-            
-            // Hide Loader
-            el.preloader.style.opacity = '0';
-            setTimeout(() => {
-                el.preloader.style.display = 'none';
-                el.container.style.display = 'block';
-            }, 500);
+            // 2. Load User
+            try {
+                const u = await fetch(`${DB_URL}/users/${userId}`, { headers: { "x-secret-key": DB_KEY } });
+                if(u.ok) {
+                    const d = await u.json();
+                    if(d.id) userData = { ...userData, ...d };
+                } else {
+                    saveUser(); // Create
+                }
+            } catch(e) { console.log(e); }
+
+            // 3. Render
+            render();
+            loadAds();
+            document.getElementById('preloader').style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
         }
 
-        async function saveData() {
-            await fetch(`${CONFIG.DB_URL}/users/${userId}`, {
+        async function saveUser() {
+            await fetch(`${DB_URL}/users/${userId}`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "x-secret-key": CONFIG.DB_KEY },
-                body: JSON.stringify({
-                    id: userId,
-                    firstName: user.first_name,
-                    balance: state.balance,
-                    adsWatched: state.ads,
-                    referrals: state.refs
-                })
+                headers: { "Content-Type": "application/json", "x-secret-key": DB_KEY },
+                body: JSON.stringify(userData)
             });
         }
 
-        function updateUI() {
-            el.balance.innerText = `$${state.balance.toFixed(3)}`;
-            el.ads.innerText = state.ads;
-            el.refs.innerText = state.refs;
+        function render() {
+            document.getElementById('greeting').innerText = `Hi, ${user.first_name}`;
+            document.getElementById('user-id').innerText = `ID: ${userId}`;
+            document.getElementById('total-earning').innerText = `$${userData.balance.toFixed(3)}`;
+            document.getElementById('ad-count').innerText = userData.ads;
+            document.getElementById('referral-count').innerText = userData.refs;
+            document.getElementById('rate-display').innerText = `$${appSettings.adReward}`;
+            document.getElementById('min-withdraw-txt').innerText = `Min: $${appSettings.minWithdraw}`;
+            document.getElementById('ref-link').value = `https://t.me/${BOT_USERNAME}?start=${userId}`;
+            
+            if(user.photo_url) document.getElementById('profile-pic').innerHTML = `<img src="${user.photo_url}">`;
+            else document.getElementById('profile-pic').innerText = user.first_name.charAt(0);
+
+            // Chart
+            const ctx = document.getElementById('chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                    datasets: [{ label: 'Activity', data: [userData.ads, 2, 5, 1, 0, 0, 0], backgroundColor: '#007AFF' }]
+                },
+                options: { plugins: { legend: {display:false} } }
+            });
         }
 
-        // --- EVENTS ---
+        // --- ADS ---
+        function loadAds() {
+            if(!appSettings.adZoneId) return;
+            const s = document.createElement('script');
+            s.src = "//libtl.com/sdk.js";
+            s.dataset.zone = appSettings.adZoneId;
+            s.dataset.sdk = `show_${appSettings.adZoneId}`;
+            document.body.appendChild(s);
+        }
 
-        // Watch Ad
         document.getElementById('watch-btn').onclick = () => {
-            const showAd = window[`show_${CONFIG.MONETAG_ZONE}`];
+            const showAd = window[`show_${appSettings.adZoneId}`];
             if(typeof showAd === 'function') {
-                document.getElementById('ad-loader').style.display = 'flex';
                 showAd().then(() => {
-                    state.balance += CONFIG.AD_REWARD;
-                    state.ads++;
-                    updateUI();
-                    saveData();
-                    tg.showAlert(`Success! +$${CONFIG.AD_REWARD}`);
-                }).catch(() => tg.showAlert("Ad failed to load"))
-                .finally(() => document.getElementById('ad-loader').style.display = 'none');
+                    userData.balance += appSettings.adReward;
+                    userData.ads++;
+                    render();
+                    saveUser();
+                    tg.showAlert("Ad Watched!");
+                });
             } else {
-                tg.showAlert("Ads loading... wait 5 seconds");
+                tg.showAlert("Ad Loading...");
             }
         };
 
-        // Withdraw
-        document.getElementById('withdraw-form').onsubmit = async (e) => {
+        // --- EVENTS ---
+        document.getElementById('join-btn').onclick = () => tg.openTelegramLink(appSettings.channelUrl);
+        
+        document.getElementById('withdraw-form').onsubmit = (e) => {
             e.preventDefault();
             const amt = parseFloat(document.getElementById('w-amount').value);
             const mth = document.getElementById('w-method').value;
             const acc = document.getElementById('w-account').value;
 
-            if(amt < CONFIG.MIN_WITHDRAW) return tg.showAlert(`Min: $${CONFIG.MIN_WITHDRAW}`);
-            if(amt > state.balance) return tg.showAlert("Insufficient Balance");
+            if(amt < appSettings.minWithdraw) return tg.showAlert("Minimum not reached");
+            if(amt > userData.balance) return tg.showAlert("Insufficient funds");
 
-            state.balance -= amt;
-            updateUI();
-            saveData();
+            userData.balance -= amt;
+            render();
+            saveUser();
 
-            // Send to Vercel Backend
+            // Send to Backend
             fetch('/api/bot', {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    action: 'withdraw',
-                    userId: userId,
-                    userDetails: user.first_name,
-                    amount: amt,
-                    method: mth,
-                    account: acc
+                    action: "withdraw",
+                    userId, name: user.first_name,
+                    amount: amt, method: mth, account: acc
                 })
             });
-
             closeModals();
-            tg.showAlert("Request Sent!");
+            tg.showAlert("Withdrawal Pending!");
         };
 
-        // UI Helpers
-        window.openModal = (id) => document.getElementById('modal-'+id).style.display = 'flex';
+        // Helpers
+        window.openModal = (id) => document.getElementById(id+'-modal').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-        window.copyRef = () => {
-            navigator.clipboard.writeText(document.getElementById('ref-link').value);
-            tg.showAlert("Copied!");
-        };
-        window.openLink = (url) => tg.openTelegramLink(url);
+        window.copyRef = () => { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Copied"); };
 
-        // Failsafe Loader (Forces open after 3s)
-        let percent = 0;
-        const loadInt = setInterval(() => {
-            percent += 5;
-            if(percent > 90) clearInterval(loadInt);
-            el.loadingText.innerText = `Loading... ${percent}%`;
-        }, 100);
-
-        setTimeout(() => {
-            if(el.preloader.style.display !== 'none') init();
-        }, 3000);
-
-        window.onload = init;
-
+        // Force Start if stuck
+        setTimeout(() => { document.getElementById('preloader').style.display = 'none'; document.querySelector('.container').style.display = 'block'; }, 4000);
+        
+        init();
     </script>
 </body>
 </html>
