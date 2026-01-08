@@ -67,8 +67,7 @@ async function handleTelegramMessage(msg) {
     const username = msg.from.username ? `@${msg.from.username}` : "none";
 
     // Welcome Image
-    const userPhoto = "https://i.ibb.co/93229pT/file-32.jpg"; 
-
+    const userPhoto = "https://img.freepik.com/free-vector/hand-holding-phone-with-coins_23-2148094669.jpg";
     if (text.startsWith('/start')) {
         
         // 1. Check if user exists in Custom DB
