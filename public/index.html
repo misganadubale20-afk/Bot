@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Taka Income Pro - Earn Money</title>
+    <title>Taka Income Pro</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <script>
-        // --- INSTANT THEME APPLY SCRIPT ---
+        // --- INSTANT THEME APPLY ---
         (function() {
             try {
                 const tg = window.Telegram.WebApp;
@@ -21,53 +21,53 @@
     </script>
     
     <style>
-        /* --- YOUR ORIGINAL CSS (UNTOUCHED) --- */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap');
         :root { --primary-color: #007AFF; --primary-color-rgb: 0, 122, 255; --secondary-color: #0056B3; --background-color: #F0F2F5; --card-background: #FFFFFF; --text-color: #1D1D1F; --text-light: #6E6E73; --border-color: #E5E5EA; --glass-bg: rgba(240, 242, 245, 0.8); }
         [data-theme="dark"] { --primary-color: #0A84FF; --primary-color-rgb: 10, 132, 255; --secondary-color: #3395FF; --background-color: #000000; --card-background: #1C1C1E; --text-color: #F5F5F7; --text-light: #8E8E93; --border-color: #3A3A3C; --glass-bg: rgba(28, 28, 30, 0.8); }
         
-        * { box-sizing: border-box; }
-        html, body { overscroll-behavior-y: contain; }
-        body { font-family: 'Noto Sans', sans-serif; margin: 0; padding: 20px 15px 100px 15px; background-color: var(--background-color); color: var(--text-color); -webkit-font-smoothing: antialiased; transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans', sans-serif; margin: 0; padding: 20px 15px 100px 15px; background-color: var(--background-color); color: var(--text-color); transition: background-color 0.3s; }
         
+        /* Preloader */
         #preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: var(--background-color); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; transition: opacity 0.5s ease; }
         #preloader i { font-size: 48px; color: var(--primary-color); animation: spin 1.5s linear infinite; }
         #preloader-percentage { font-size: 20px; font-weight: 700; color: var(--text-color); }
-        #preloader-footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 15px; z-index: 10000; transition: opacity 0.5s ease; }
+        #preloader-footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 15px; z-index: 10000; }
         #preloader-footer a { font-size: 14px; font-weight: 500; color: var(--text-light); text-decoration: none; }
 
-        .container { max-width: 500px; margin: 0 auto; display: none; }
+        .container { max-width: 500px; margin: 0 auto; display: none; animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 24px; animation: fadeIn 0.5s ease-out; }
+        
+        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 24px; }
         #profile-pic { width: 52px; height: 52px; border-radius: 50%; background-color: var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; overflow: hidden; border: 2px solid var(--card-background); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         #profile-pic img { width: 100%; height: 100%; object-fit: cover; }
         #greeting { font-size: 22px; font-weight: 800; }
         
-        .balance-card { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 28px; border-radius: 24px; text-align: center; margin-bottom: 20px; box-shadow: 0 12px 25px rgba(var(--primary-color-rgb), 0.2); animation: fadeIn 0.6s ease-out; }
+        .balance-card { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 28px; border-radius: 24px; text-align: center; margin-bottom: 20px; box-shadow: 0 12px 25px rgba(var(--primary-color-rgb), 0.2); }
         .balance-card::after { content: '\f51e'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: -20px; bottom: -30px; font-size: 120px; opacity: 0.1; transform: rotate(-15deg); pointer-events: none; }
-        .balance-card h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: 500; opacity: 0.9; z-index: 1; position: relative; }
-        .balance-card .amount { font-size: 48px; font-weight: 800; line-height: 1.2; z-index: 1; position: relative; }
+        .balance-card h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: 500; opacity: 0.9; position: relative; z-index: 1; }
+        .balance-card .amount { font-size: 48px; font-weight: 800; line-height: 1.2; position: relative; z-index: 1; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
-        .stat-item { position: relative; overflow: hidden; background-color: var(--card-background); padding: 20px; border-radius: 18px; text-align: center; border: 1px solid var(--border-color); animation: fadeIn 0.7s ease-out; transition: background-color 0.3s, border-color 0.3s; }
+        .stat-item { position: relative; overflow: hidden; background-color: var(--card-background); padding: 20px; border-radius: 18px; text-align: center; border: 1px solid var(--border-color); }
         .stat-item .bg-icon { position: absolute; right: 5px; bottom: 5px; font-size: 50px; opacity: 0.08; color: var(--text-color); pointer-events: none; }
         .stat-item .icon { font-size: 28px; color: var(--primary-color); margin-bottom: 12px; }
         .stat-item .value { font-size: 24px; font-weight: 800; }
         .stat-item .label { font-size: 14px; color: var(--text-light); }
         
-        .card { background-color: var(--card-background); padding: 20px; border-radius: 18px; margin-bottom: 20px; border: 1px solid var(--border-color); animation: fadeIn 0.8s ease-out; transition: background-color 0.3s, border-color 0.3s; }
+        .card { background-color: var(--card-background); padding: 20px; border-radius: 18px; margin-bottom: 20px; border: 1px solid var(--border-color); }
         .card-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
         .chart-container { position: relative; height: 200px; width: 100%; }
         
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb), 0.4); } 70% { box-shadow: 0 0 0 10px rgba(var(--primary-color-rgb), 0); } 100% { box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb), 0); } }
         .action-button { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 18px; border: none; border-radius: 16px; background-color: var(--primary-color); color: white; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
         .action-button.pulsing { animation: pulse 2s infinite; }
-        .action-button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(var(--primary-color-rgb), 0.2); }
+        .action-button:hover:not(:disabled) { transform: translateY(-3px); }
         .action-button:disabled { background-color: #8E8E93; cursor: not-allowed; }
         .secondary-button { background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); margin-top: 15px; }
         
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); padding: 10px 15px; background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s; z-index: 100; }
-        .nav-button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px; border-radius: 12px; color: var(--text-light); text-decoration: none; font-size: 12px; font-weight: 500; border: none; background: transparent; cursor: pointer; transition: all 0.2s ease; }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); padding: 10px 15px; background: var(--glass-bg); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); z-index: 100; }
+        .nav-button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px; border-radius: 12px; color: var(--text-light); text-decoration: none; font-size: 12px; font-weight: 500; border: none; background: transparent; cursor: pointer; }
         .nav-button.active, .nav-button:hover { color: var(--primary-color); background-color: rgba(var(--primary-color-rgb), 0.1); }
         .nav-button i { font-size: 20px; }
         
@@ -75,15 +75,14 @@
         .modal-content { background-color: var(--card-background); padding: 20px; border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; margin: 0 auto; box-sizing: border-box; animation: slideIn 0.3s ease-out; max-height: 80vh; overflow-y: auto;}
         @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .close-button { color: #aaa; float: right; font-size: 28px; line-height: 1; font-weight: bold; cursor: pointer; }
-        .modal-content input, .modal-content select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid var(--border-color); border-radius: 10px; font-family: 'Noto Sans', sans-serif; font-size: 16px; background-color: var(--background-color); color: var(--text-color); transition: border-color 0.2s, box-shadow 0.2s; }
-        .modal-content input:focus, .modal-content select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2); }
+        .modal-content input, .modal-content select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid var(--border-color); border-radius: 10px; font-family: 'Noto Sans', sans-serif; font-size: 16px; background-color: var(--background-color); color: var(--text-color); }
+        .modal-content input:focus { outline: none; border-color: var(--primary-color); }
         
         #bonus-tasks-list .bonus-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; background-color: var(--background-color); border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); }
         .bonus-item .details { display: flex; flex-direction: column; gap: 4px; }
         .bonus-item .title { font-weight: 600; font-size: 16px; color: var(--text-color); }
         .bonus-item .reward { font-size: 14px; font-weight: 700; color: var(--primary-color); }
-        .bonus-item .reward i { margin-right: 5px; }
-        .bonus-item .claim-button { padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: 10px; background-color: var(--primary-color); color: white; border: none; cursor: pointer; transition: background-color 0.2s; }
+        .bonus-item .claim-button { padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: 10px; background-color: var(--primary-color); color: white; border: none; cursor: pointer; }
         .bonus-item .claim-button:disabled { background-color: #28a745; cursor: not-allowed; }
 
         .history-item { padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
@@ -135,7 +134,7 @@
         <button class="nav-button" onclick="showModal('bonusTasksModal', this)"><i class="fa-solid fa-star"></i><span>Bonus</span></button>
     </div>
     
-    <!-- All Modals (PRESERVED) -->
+    <!-- All Modals -->
     <div id="welcomeModal" class="modal"><div class="modal-content"><span class="close-button" onclick="closeModal('welcomeModal')">&times;</span><h3 id="welcome-title" class="card-title" style="text-align:center;"></h3><p id="welcome-message" style="line-height: 1.6; font-size: 15px; text-align: center; white-space: pre-wrap; margin: 15px 0;"></p><button class="action-button" onclick="closeModal('welcomeModal')">I Understand</button></div></div>
     
     <div id="withdrawModal" class="modal">
@@ -159,43 +158,50 @@
     
     <div id="supportModal" class="modal"><div class="modal-content"><span class="close-button" onclick="closeModal('supportModal')">&times;</span><h3 class="card-title">Support</h3><p>For any help or questions, please contact the admin directly. We are here to assist you!</p><button class="action-button" id="admin-contact-button"><i class="fa-brands fa-telegram"></i><span>Contact Admin</span></button></div></div>
     <div id="historyModal" class="modal"><div class="modal-content"><span class="close-button" onclick="closeModal('historyModal')">&times;</span><h3 class="card-title">Withdrawal History</h3><div id="history-list"></div></div></div>
-    <div id="inviteModal" class="modal"><div class="modal-content"><span class="close-button" onclick="closeModal('inviteModal')">&times;</span><h3 class="card-title">Invite Friends</h3><p>Share your referral link with your friends and earn together. You will get a reward for each successful referral.</p><div id="ref-link-display" style="background:#f0f0f0; padding:10px; margin:10px 0; word-break:break-all; border-radius:8px;"></div><button class="action-button" id="copy-link-button"><i class="fa-solid fa-copy"></i><span>Copy Link</span></button><button class="action-button secondary-button" id="share-link-button"><i class="fa-solid fa-share-nodes"></i><span>Share Link</span></button></div></div>
+    <div id="inviteModal" class="modal"><div class="modal-content"><span class="close-button" onclick="closeModal('inviteModal')">&times;</span><h3 class="card-title">Invite Friends</h3><p>Share your referral link with your friends and earn together. You will get a reward for each successful referral.</p><div style="background:#f5f5f5; padding:10px; margin:10px 0; border-radius:10px; font-size:12px; word-break:break-all;" id="ref-link-display">Loading...</div><button class="action-button" id="copy-link-button"><i class="fa-solid fa-copy"></i><span>Copy Link</span></button><button class="action-button secondary-button" id="share-link-button"><i class="fa-solid fa-share-nodes"></i><span>Share Link</span></button></div></div>
     <div id="bonusTasksModal" class="modal"><div class="modal-content"><span class="close-button" onclick="closeModal('bonusTasksModal')">&times;</span><h3 class="card-title">Bonus Tasks</h3><p style="text-align: center; margin-bottom: 20px;">Complete these one-time tasks to earn extra rewards!</p><div id="bonus-tasks-list"></div></div></div>
     <div id="multiAccountModal" class="modal"><div class="modal-content"><h3 class="card-title" style="text-align:center;">⚠️ Warning</h3><p>Multiple accounts are not allowed. Only one Telegram account can be used on this device.</p></div></div>
 
     <script>
         // --- CONFIGURATION ---
+        // Most settings are now fetched from DB, defaults provided below
         const config = {
-            // CUSTOM DB CREDENTIALS
+            // Your Custom Database Credentials
             DB_URL: "https://data-myfa.vercel.app/api/db/bot",
             DB_KEY: "QLE3KvEiqW29j269",
             
-            // BOT INFO
-            BOT_USERNAME: 'Yichuwatchrobot', 
+            BOT_USERNAME: 'Yichuwatchrobot', // No @
             
-            // DEFAULTS (Will be overwritten by DB settings if found)
+            // Defaults (Admin panel can override these)
             TELEGRAM_CHANNEL_LINK: 'https://t.me/BasicTouchPro',
             ADMIN_SUPPORT_LINK: 'https://t.me/BasicTouch',
             MONETAG_ZONE_ID: 'YOUR_MONETAG_ZONE_ID', 
+            
             AD_REWARD: 0.001,
             DAILY_AD_LIMIT: 15,
             MINIMUM_WITHDRAWAL: 0.10,
             COOLDOWN_MINUTES: 30,
+            
             withdrawalMethods: ['Binance UID', 'Bikash', 'Nogad'],
+            
+            bonusTasks: [
+                { id: 'bonus_01', title: 'Join Channel', link: 'https://t.me/BasicTouchPro', reward: 0.005, duration: 10 },
+                { id: 'bonus_02', title: 'Check Bot', link: 'https://t.me/Yichuwatchrobot', reward: 0.001, duration: 10 }
+            ],
             
             welcomeNotice: {
                 title: "Welcome!",
-                message: "Rules:\n1. No VPN\n2. No Multiple Accounts\nMin Withdraw: $0.10"
+                message: `Follow the rules to ensure you receive your payment.\n\n💰 Reward per Ad: $0.001\n🔥 Min Withdraw: $0.10`
             }
         };
 
+        // --- APP LOGIC ---
         const tg = window.Telegram ? window.Telegram.WebApp : null;
-        if(tg) tg.expand();
+        if(tg) { tg.expand(); tg.ready(); }
 
-        const user = tg?.initDataUnsafe?.user || { id: "12345", first_name: "Guest", last_name: "", username: "guest" };
+        const user = tg?.initDataUnsafe?.user || { id: "12345", first_name: "Guest", last_name: "User", username: "guest" };
         const userId = user.id.toString();
 
-        // State Management
         let state = {
             id: userId,
             balance: 0.00,
@@ -203,14 +209,13 @@
             adsWatchedToday: 0,
             lastAdWatchedDate: null,
             cooldownUntil: null,
-            weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
+            weeklyActivity: [0,0,0,0,0,0,0],
             withdrawalHistory: [],
             completedBonusTasks: [],
             referrals: 0
         };
 
-        // DOM Elements
-        const el = { 
+        const allDOMElements = { 
             preloader: document.getElementById('preloader'), 
             preloaderPercentage: document.getElementById('preloader-percentage'),
             container: document.querySelector('.container'), 
@@ -238,37 +243,33 @@
         // --- DATABASE LOGIC ---
         async function loadState() {
             try {
-                // 1. Get Settings from Admin Panel (Backend)
-                const settingsRes = await fetch(`${config.DB_URL}/config/settings`, { headers: {"x-secret-key": config.DB_KEY} });
-                if(settingsRes.ok) {
-                    const s = await settingsRes.json();
+                // 1. Get Settings
+                const settingRes = await fetch(`${config.DB_URL}/config/settings`, { headers: {"x-secret-key": config.DB_KEY} });
+                if(settingRes.ok) {
+                    const s = await settingRes.json();
                     if(s.adReward) config.AD_REWARD = parseFloat(s.adReward);
                     if(s.minWithdraw) config.MINIMUM_WITHDRAWAL = parseFloat(s.minWithdraw);
                     if(s.adZoneId) config.MONETAG_ZONE_ID = s.adZoneId;
                     if(s.channelUrl) config.TELEGRAM_CHANNEL_LINK = s.channelUrl;
                 }
 
-                // 2. Get User Data
+                // 2. Get User
                 const res = await fetch(`${config.DB_URL}/users/${userId}`, { headers: { "x-secret-key": config.DB_KEY } });
-                
                 if (res.ok) {
                     const data = await res.json();
-                    if (data && data.id) {
-                        // Merge (keep local structure if keys missing)
-                        state = { ...state, ...data };
-                    }
+                    if (data && data.id) state = { ...state, ...data };
                 } else if(res.status === 404) {
                     await saveState(); // Create new
                 }
 
-                // Date Check
+                // Date Reset
                 const today = new Date().toLocaleDateString();
                 if (state.lastAdWatchedDate !== today) {
                     state.adsWatchedToday = 0;
                     state.lastAdWatchedDate = today;
                     saveState();
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Load Error", e); }
         }
 
         async function saveState() {
@@ -278,24 +279,24 @@
                     headers: { "Content-Type": "application/json", "x-secret-key": config.DB_KEY },
                     body: JSON.stringify(state)
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Save Error", e); }
         }
 
-        // --- UI UPDATES ---
+        // --- UI FUNCTIONS ---
         function updateUI() {
             if (state.cooldownUntil && new Date() >= new Date(state.cooldownUntil)) { 
                 state.cooldownUntil = null; state.adsWatchedToday = 0; saveState(); 
             }
 
-            el.totalEarningEl.textContent = `$${(state.balance || 0).toFixed(3)}`;
-            el.adCountEl.textContent = state.adCount || 0;
-            el.adsTodayCountEl.textContent = `${state.adsWatchedToday} / ${config.DAILY_AD_LIMIT}`;
-            el.referralCountEl.textContent = state.referrals || 0;
-            el.minWithdrawText.textContent = `Minimum withdrawal is $${config.MINIMUM_WITHDRAWAL.toFixed(2)}.`;
-            el.refLinkDisplay.textContent = `https://t.me/${config.BOT_USERNAME}?start=${userId}`;
+            allDOMElements.totalEarningEl.textContent = `$${(state.balance || 0).toFixed(3)}`;
+            allDOMElements.adCountEl.textContent = state.adCount || 0;
+            allDOMElements.adsTodayCountEl.textContent = `${state.adsWatchedToday} / ${config.DAILY_AD_LIMIT}`;
+            allDOMElements.referralCountEl.textContent = state.referrals || 0;
+            allDOMElements.minWithdrawText.textContent = `Minimum withdrawal is $${config.MINIMUM_WITHDRAWAL.toFixed(2)}.`;
+            allDOMElements.refLinkDisplay.textContent = `https://t.me/${config.BOT_USERNAME}?start=${userId}`;
 
-            // Button Logic
-            let btn = el.watchAdButton;
+            // Cooldown / Limit Logic
+            const btn = allDOMElements.watchAdButton;
             if (state.cooldownUntil && new Date() < new Date(state.cooldownUntil)) {
                 btn.disabled = true;
                 const min = Math.floor((new Date(state.cooldownUntil) - new Date()) / 60000);
@@ -309,7 +310,7 @@
             updateChart();
         }
 
-        // --- MONETAG ADS ---
+        // --- ADS ---
         function loadMonetag() {
             if(!config.MONETAG_ZONE_ID || config.MONETAG_ZONE_ID.includes('YOUR_')) return;
             const s = document.createElement('script');
@@ -320,7 +321,7 @@
         }
 
         async function watchAd() {
-            el.adLoaderOverlay.style.display = 'flex';
+            allDOMElements.adLoaderOverlay.style.display = 'flex';
             const showAd = window[`show_${config.MONETAG_ZONE_ID}`];
             
             if (typeof showAd === 'function') {
@@ -337,23 +338,23 @@
                     saveState(); updateUI();
                     safeTgAlert(`Success! +$${config.AD_REWARD}`);
                 }).catch(() => safeTgAlert("Ad failed to load."))
-                .finally(() => el.adLoaderOverlay.style.display = 'none');
+                .finally(() => allDOMElements.adLoaderOverlay.style.display = 'none');
             } else {
-                el.adLoaderOverlay.style.display = 'none';
-                safeTgAlert("Ad loading... please wait.");
+                allDOMElements.adLoaderOverlay.style.display = 'none';
+                safeTgAlert("Ad loading... wait a moment.");
             }
         }
 
-        // --- WITHDRAWAL (via Vercel Backend) ---
+        // --- WITHDRAWAL (BACKEND CONNECTED) ---
         async function handleWithdrawal(e) {
             e.preventDefault();
             const btn = document.getElementById('withdraw-submit-button');
-            const form = el.withdrawForm;
+            const form = allDOMElements.withdrawForm;
             const amount = parseFloat(form.elements['withdraw-amount'].value);
             const method = form.elements.method.value;
             const account = form.elements['account-number'].value;
 
-            if (amount < config.MINIMUM_WITHDRAWAL) return safeTgAlert(`Min withdraw: $${config.MINIMUM_WITHDRAWAL}`);
+            if (amount < config.MINIMUM_WITHDRAWAL) return safeTgAlert(`Min Withdraw: $${config.MINIMUM_WITHDRAWAL}`);
             if (amount > state.balance) return safeTgAlert("Insufficient Balance");
 
             btn.disabled = true;
@@ -361,7 +362,7 @@
             btn.querySelector('.spinner').style.display = 'block';
 
             try {
-                // 1. Deduct Balance
+                // 1. Deduct Locally
                 state.balance -= amount;
                 state.withdrawalHistory.unshift({
                     method, number: account, amount, 
@@ -382,9 +383,9 @@
 
                 closeModal('withdrawModal');
                 form.reset();
-                safeTgAlert("Withdrawal Request Sent!");
+                safeTgAlert("Request Sent! Admin notified.");
             } catch(e) {
-                safeTgAlert("Connection Error");
+                safeTgAlert("Network Error");
             } finally {
                 btn.disabled = false;
                 btn.querySelector('.button-text').style.display = 'block';
@@ -392,12 +393,10 @@
             }
         }
 
-        // --- BONUS TASKS ---
+        // --- BONUS ---
         function renderBonusTasks() {
-            const list = el.bonusTasksListEl;
+            const list = allDOMElements.bonusTasksListEl;
             list.innerHTML = '';
-            // Fetch bonus tasks from DB settings if available, else use config
-            // For now using config
             config.bonusTasks.forEach(task => {
                 const isDone = state.completedBonusTasks.includes(task.id);
                 const item = document.createElement('div');
@@ -418,14 +417,14 @@
                     state.balance += task.reward;
                     state.completedBonusTasks.push(taskId);
                     saveState(); updateUI(); renderBonusTasks();
-                    safeTgAlert(`Bonus +$${task.reward} Added!`);
+                    safeTgAlert(`Bonus +$${task.reward} Claimed!`);
                 }
             }, task.duration * 1000);
         };
 
         // --- HISTORY ---
         function renderHistory() {
-            const list = el.historyListEl;
+            const list = allDOMElements.historyListEl;
             if(state.withdrawalHistory.length === 0) { list.innerHTML = '<p class="no-history">No History</p>'; return; }
             list.innerHTML = state.withdrawalHistory.map(h => `
                 <div class="history-item">
@@ -459,35 +458,36 @@
                 });
             }
 
-            // Fill User Info
+            // Fill UI Info
             if(user.first_name) {
-                el.greetingEl.textContent = `Welcome, ${user.first_name}`;
-                if(user.photo_url) el.profilePicEl.innerHTML = `<img src="${user.photo_url}">`;
-                else el.profilePicEl.textContent = user.first_name.charAt(0);
+                allDOMElements.greetingEl.textContent = `Welcome, ${user.first_name}!`;
+                if(user.photo_url) allDOMElements.profilePicEl.innerHTML = `<img src="${user.photo_url}" alt="P">`;
+                else allDOMElements.profilePicEl.textContent = user.first_name.charAt(0);
             }
-            el.welcomeTitle.textContent = config.welcomeNotice.title;
-            el.welcomeMessage.textContent = config.welcomeNotice.message;
+            allDOMElements.welcomeTitle.textContent = config.welcomeNotice.title;
+            allDOMElements.welcomeMessage.textContent = config.welcomeNotice.message;
 
-            // Load Data
+            // Load Data & Settings
             await loadState();
             loadMonetag();
             updateUI();
 
             // Listeners
-            el.watchAdButton.onclick = watchAd;
-            el.withdrawForm.onsubmit = handleWithdrawal;
-            el.joinChannelButton.onclick = () => tg.openTelegramLink(config.TELEGRAM_CHANNEL_LINK);
-            el.adminContactButton.onclick = () => tg.openTelegramLink(config.ADMIN_SUPPORT_LINK);
-            el.copyLinkButton.onclick = () => { navigator.clipboard.writeText(`https://t.me/${config.BOT_USERNAME}?start=${userId}`); safeTgAlert("Copied!"); };
-            
-            // Loading Animation
+            allDOMElements.watchAdButton.onclick = watchAd;
+            allDOMElements.withdrawForm.onsubmit = handleWithdrawal;
+            allDOMElements.joinChannelButton.onclick = () => tg.openTelegramLink(config.TELEGRAM_CHANNEL_LINK);
+            allDOMElements.adminContactButton.onclick = () => tg.openTelegramLink(config.ADMIN_SUPPORT_LINK);
+            allDOMElements.copyLinkButton.onclick = () => { navigator.clipboard.writeText(`https://t.me/${config.BOT_USERNAME}?start=${userId}`); safeTgAlert("Copied!"); };
+            allDOMElements.shareLinkButton.onclick = () => tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${config.BOT_USERNAME}?start=${userId}`)}`);
+
+            // Finish Loading (Failsafe)
             let p = 0;
             const int = setInterval(() => {
-                p+=5; el.preloaderPercentage.textContent = p+'%';
+                p+=5; allDOMElements.preloaderPercentage.textContent = p+'%';
                 if(p>=100) {
                     clearInterval(int);
-                    el.preloader.style.display = 'none';
-                    el.container.style.display = 'block';
+                    allDOMElements.preloader.style.display = 'none';
+                    allDOMElements.container.style.display = 'block';
                     if(!sessionStorage.getItem('v')) { showModal('welcomeModal'); sessionStorage.setItem('v', '1'); }
                 }
             }, 50);
