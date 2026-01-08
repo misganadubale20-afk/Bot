@@ -1,133 +1,149 @@
-// api/bot.js
 const TelegramBot = require('node-telegram-bot-api');
 
-// ----------------------------------------------------
-// 👇 HARDCODE CONFIGURATION 👇
-// ----------------------------------------------------
+// --- 1. CONFIGURATION ---
 const TOKEN = "8529929285:AAHwfWLGT7WKSyuZn_Zybs0PWx6a-FjLddI"; 
-const ADMIN_ID = "6464599036"; // For withdrawal alerts
-const WEBAPP_URL = "https://botxx.vercel.app"; 
-
-// YOUR CUSTOM DATABASE CONFIG
 const DB_URL = "https://data-myfa.vercel.app/api/db/bot";
 const DB_KEY = "QLE3KvEiqW29j269";
-// ----------------------------------------------------
+const ADMIN_PASSWORD = "123"; // Password for Admin Panel
 
 const bot = new TelegramBot(TOKEN, { polling: false });
 
-// Helper: Call Custom DB
+// --- 2. DATABASE HELPER ---
 async function callDB(endpoint, method = "GET", data = null) {
     const options = {
         method,
-        headers: {
-            "Content-Type": "application/json",
-            "x-secret-key": DB_KEY
-        }
+        headers: { "Content-Type": "application/json", "x-secret-key": DB_KEY }
     };
     if (data) options.body = JSON.stringify(data);
-    
     try {
         const res = await fetch(`${DB_URL}${endpoint}`, options);
-        // If 404, return null (user not found)
         if (res.status === 404) return null;
         return await res.json();
-    } catch (e) {
-        console.error("DB Error:", e);
-        return null;
-    }
+    } catch (e) { return null; }
 }
 
+// --- 3. SERVERLESS HANDLER ---
 export default async function handler(req, res) {
-    try {
-        const body = req.body;
+    const body = req.body;
 
-        // 1. Handle Telegram Messages
-        if (req.method === 'POST' && body.message) {
-            await handleTelegramMessage(body.message);
-        }
-        
-        // 2. Handle Withdrawal Notification (Sent from Frontend)
-        else if (req.method === 'POST' && body.action === 'withdraw') {
-            const { userDetails, userId, amount, method, account } = body;
-            const msg = `<b>💰 Withdrawal Request</b>\n\n👤 ${userDetails}\n🆔 <code>${userId}</code>\n💳 ${method}\n🔢 <code>${account}</code>\n💵 $${amount}`;
-            await bot.sendMessage(ADMIN_ID, msg, { parse_mode: 'HTML' });
+    // A. Handle Admin API (From admin.html)
+    if (req.method === 'POST' && body.action) {
+        if(body.password !== ADMIN_PASSWORD) return res.status(401).json({error: "Wrong Password"});
+
+        if(body.action === 'get_settings') {
+            let settings = await callDB('/config/settings') || getDefaultSettings();
+            return res.status(200).json(settings);
         }
 
-    } catch (error) {
-        console.error('Error:', error);
+        if(body.action === 'save_settings') {
+            await callDB('/config/settings', 'POST', body.data);
+            return res.status(200).json({success: true});
+        }
+
+        if(body.action === 'broadcast') {
+            // Get all user IDs (We store them in a separate list)
+            const list = await callDB('/config/user_list') || { ids: [] };
+            let count = 0;
+            for(const id of list.ids) {
+                try {
+                    await bot.sendMessage(id, body.message, {parse_mode: 'HTML'});
+                    count++;
+                } catch(e) {}
+            }
+            return res.status(200).json({sent: count});
+        }
     }
+
+    // B. Handle User Withdrawals (From index.html)
+    if(req.method === 'POST' && body.action === 'withdraw') {
+        const settings = await callDB('/config/settings') || getDefaultSettings();
+        const msg = `<b>💰 Withdrawal Request</b>\n\n👤 ${body.name}\n🆔 <code>${body.userId}</code>\n💵 $${body.amount}\n💳 ${body.method}\n🔢 ${body.account}`;
+        // Send to Admin Channel or ID defined in settings
+        await bot.sendMessage(settings.adminId || body.userId, msg, {parse_mode: 'HTML'});
+        return res.status(200).send('OK');
+    }
+
+    // C. Handle Telegram Updates
+    if (req.method === 'POST' && body.message) {
+        await handleMessage(body.message);
+    }
+
     res.status(200).send('OK');
 }
 
-async function handleTelegramMessage(msg) {
+// --- 4. TELEGRAM LOGIC ---
+async function handleMessage(msg) {
     const chatId = msg.chat.id;
     const text = msg.text || "";
     const userId = msg.from.id.toString();
-    const firstName = msg.from.first_name || "User";
-    const username = msg.from.username ? `@${msg.from.username}` : "none";
+    const name = msg.from.first_name;
 
-    // Welcome Image
-    const userPhoto = "https://img.freepik.com/free-vector/hand-holding-phone-with-coins_23-2148094669.jpg";
+    // Load Settings
+    let settings = await callDB('/config/settings');
+    if(!settings) {
+        settings = getDefaultSettings();
+        await callDB('/config/settings', 'POST', settings);
+    }
+
     if (text.startsWith('/start')) {
-        
-        // 1. Check if user exists in Custom DB
-        let userData = await callDB(`/users/${userId}`);
-
-        // 2. If User doesn't exist, create them
-        if (!userData || !userData.id) {
-            
-            // Check Referral Logic
-            const params = text.split(' ');
-            let referrerId = null;
-            if (params.length > 1 && params[1] !== userId) {
-                referrerId = params[1];
-            }
-
-            // Create new user object
-            userData = {
-                id: userId,
-                firstName: firstName,
-                username: username,
-                balance: 0.00,
-                adsWatched: 0,
-                referrals: 0,
-                referredBy: referrerId || "none",
-                joinedAt: new Date().toISOString()
-            };
-
-            // Save new user to DB
-            await callDB(`/users/${userId}`, "POST", userData);
-
-            // 3. Process Referral Reward
-            if (referrerId) {
-                const refUser = await callDB(`/users/${referrerId}`);
-                if (refUser && refUser.id) {
-                    // Update Referrer Balance (+ $0.01)
-                    refUser.balance = (refUser.balance || 0) + 0.01;
-                    refUser.referrals = (refUser.referrals || 0) + 1;
-                    
-                    // Save Referrer
-                    await callDB(`/users/${referrerId}`, "POST", refUser);
-
-                    // Notify Referrer
-                    try {
-                        await bot.sendMessage(referrerId, `🎉 *New Referral!*\n\n${firstName} joined.\n+$0.01 Added!`, { parse_mode: 'Markdown' });
-                    } catch (e) {}
-                }
-            }
+        // 1. Save User ID for Broadcasts
+        let list = await callDB('/config/user_list');
+        if(!list) list = { ids: [] };
+        if(!list.ids.includes(chatId)) {
+            list.ids.push(chatId);
+            await callDB('/config/user_list', 'POST', list);
         }
 
-        // 4. Send Welcome UI
+        // 2. Create User Profile if new
+        let user = await callDB(`/users/${userId}`);
+        if(!user) {
+            // Referral Logic
+            const refId = text.split(' ')[1];
+            if(refId && refId !== userId) {
+                let refUser = await callDB(`/users/${refId}`);
+                if(refUser) {
+                    refUser.balance = (refUser.balance || 0) + (settings.referralBonus || 0.01);
+                    refUser.referrals = (refUser.referrals || 0) + 1;
+                    await callDB(`/users/${refId}`, 'POST', refUser);
+                    bot.sendMessage(refId, `🎉 New Referral: ${name}`).catch(()=>{});
+                }
+            }
+            
+            user = { id: userId, balance: 0, ads: 0, refs: 0 };
+            await callDB(`/users/${userId}`, 'POST', user);
+        }
+
+        // 3. Send Welcome
         const opts = {
-            caption: `Hi! Welcome *${firstName}*\n\nYour Balance: $${(userData.balance || 0).toFixed(3)}\n\n👇 Click below to earn:`,
-            parse_mode: 'Markdown',
+            caption: settings.welcomeText.replace('{name}', name),
+            parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: "🚀 Open App", web_app: { url: WEBAPP_URL } }],
-                    [{ text: "📢 Join Channel", url: "https://t.me/BasicTouchPro" }] 
+                    [{ text: "📱 Open App", web_app: { url: settings.appUrl } }],
+                    [{ text: "📢 Join Channel", url: settings.channelUrl }]
                 ]
             }
         };
-        await bot.sendPhoto(chatId, userPhoto, opts);
+        
+        // If image exists send photo, else message
+        if(settings.imageUrl.startsWith('http')) {
+            await bot.sendPhoto(chatId, settings.imageUrl, opts);
+        } else {
+            await bot.sendMessage(chatId, opts.caption, opts);
+        }
     }
+}
+
+function getDefaultSettings() {
+    return {
+        welcomeText: "Hello {name}, welcome to Taka Income Pro!",
+        imageUrl: "https://i.ibb.co/93229pT/file-32.jpg",
+        channelUrl: "https://t.me/BasicTouchPro",
+        appUrl: "https://your-vercel-app.vercel.app", // UPDATE THIS AFTER DEPLOY
+        adminId: "YOUR_ID", // For withdrawal logs
+        adZoneId: "12345",
+        adReward: 0.001,
+        minWithdraw: 0.10,
+        referralBonus: 0.01
+    };
 }
