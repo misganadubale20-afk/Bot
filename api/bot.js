@@ -6,7 +6,7 @@ const TelegramBot = require('node-telegram-bot-api');
 // ----------------------------------------------------
 const TOKEN = "8529929285:AAHwfWLGT7WKSyuZn_Zybs0PWx6a-FjLddI"; 
 const ADMIN_ID = "6464599036"; // For withdrawal alerts
-const WEBAPP_URL = "https://your-project.vercel.app"; 
+const WEBAPP_URL = "https://botxx.vercel.app"; 
 
 // YOUR CUSTOM DATABASE CONFIG
 const DB_URL = "https://data-myfa.vercel.app/api/db/bot";
