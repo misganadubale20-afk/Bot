@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #fff; padding: 20px; max-width: 600px; margin: 0 auto; }
+        input, textarea, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #1e1e1e; color: #fff; }
+        button { background: #007AFF; font-weight: bold; border: none; cursor: pointer; }
+        button:hover { opacity: 0.9; }
+        .section { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
+        label { font-size: 12px; opacity: 0.7; }
+        h2 { margin-top: 0; }
+        #login-screen { position: fixed; inset: 0; background: #121212; z-index: 99; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h2>🔒 Admin Login</h2>
+        <input type="password" id="password" placeholder="Enter Password" style="width: 200px;">
+        <button onclick="login()" style="width: 200px;">Login</button>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+        <h1>🤖 Bot Configuration</h1>
+
+        <div class="section">
+            <h2>⚙️ General Settings</h2>
+            <label>Welcome Message (HTML Supported)</label>
+            <textarea id="welcomeText" rows="4"></textarea>
+            
+            <label>Welcome Image URL</label>
+            <input id="imageUrl" placeholder="https://...">
+
+            <label>Channel Link</label>
+            <input id="channelUrl" placeholder="https://t.me/...">
+
+            <label>Web App URL (Your Vercel Link)</label>
+            <input id="appUrl" placeholder="https://...">
+            
+            <label>Admin ID (For withdrawal logs)</label>
+            <input id="adminId" placeholder="12345678">
+        </div>
+
+        <div class="section">
+            <h2>💰 Rewards & Ads</h2>
+            <label>Monetag Zone ID</label>
+            <input id="adZoneId">
+            
+            <label>Reward Per Ad ($)</label>
+            <input id="adReward" type="number" step="0.0001">
+
+            <label>Referral Bonus ($)</label>
+            <input id="referralBonus" type="number" step="0.0001">
+
+            <label>Minimum Withdraw ($)</label>
+            <input id="minWithdraw" type="number" step="0.01">
+
+            <button onclick="save()">💾 Save Settings</button>
+        </div>
+
+        <div class="section">
+            <h2>📢 Broadcast</h2>
+            <label>Send Message to All Users</label>
+            <textarea id="broadcastMsg" rows="3" placeholder="HTML Supported..."></textarea>
+            <button onclick="broadcast()" style="background: #28a745;">🚀 Send Broadcast</button>
+        </div>
+    </div>
+
+    <script>
+        let PASS = "";
+
+        async function login() {
+            PASS = document.getElementById('password').value;
+            try {
+                const res = await fetch('/api/bot', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: 'get_settings', password: PASS })
+                });
+                
+                if(res.ok) {
+                    const data = await res.json();
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    
+                    // Fill Form
+                    Object.keys(data).forEach(key => {
+                        if(document.getElementById(key)) document.getElementById(key).value = data[key];
+                    });
+                } else {
+                    alert("Wrong Password!");
+                }
+            } catch(e) { alert("Connection Error"); }
+        }
+
+        async function save() {
+            const data = {
+                welcomeText: document.getElementById('welcomeText').value,
+                imageUrl: document.getElementById('imageUrl').value,
+                channelUrl: document.getElementById('channelUrl').value,
+                appUrl: document.getElementById('appUrl').value,
+                adminId: document.getElementById('adminId').value,
+                adZoneId: document.getElementById('adZoneId').value,
+                adReward: parseFloat(document.getElementById('adReward').value),
+                referralBonus: parseFloat(document.getElementById('referralBonus').value),
+                minWithdraw: parseFloat(document.getElementById('minWithdraw').value),
+            };
+
+            await fetch('/api/bot', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'save_settings', password: PASS, data })
+            });
+            alert("Settings Saved!");
+        }
+
+        async function broadcast() {
+            if(!confirm("Send to all users?")) return;
+            const msg = document.getElementById('broadcastMsg').value;
+            const res = await fetch('/api/bot', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'broadcast', password: PASS, message: msg })
+            });
+            const d = await res.json();
+            alert(`Sent to ${d.sent} users!`);
+        }
+    </script>
+</body>
+</html>
