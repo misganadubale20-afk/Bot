@@ -4,282 +4,240 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Besh Super Admin</title>
-    
-    <!-- Icons & Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #5856D6; /* Purple Theme */
+            --primary: #5856D6;
             --bg-body: #F3F4F6;
             --bg-sidebar: #5856D6;
-            --text-sidebar: #E0E7FF;
             --card-bg: #FFFFFF;
-            --radius: 12px;
+            --text-main: #1F2937;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; outline: none; }
         body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg-body); display: flex; height: 100vh; overflow: hidden; }
 
-        /* SIDEBAR */
-        .sidebar { width: 260px; background: var(--bg-sidebar); color: white; padding: 20px; display: flex; flex-direction: column; }
-        .sidebar h2 { margin: 0 0 30px 0; font-size: 22px; text-align: center; }
-        
-        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-sidebar); transition: 0.2s; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.2); color: white; font-weight: 600; }
-        .nav-item i { width: 20px; text-align: center; }
+        /* --- 1. COMPACT SIDEBAR (Icons Only) --- */
+        .sidebar {
+            width: 70px; /* Fixed narrow width */
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
 
-        /* MAIN CONTENT */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        /* AUTH BOX */
-        .auth-box { background: #EEF2FF; border: 1px solid #C7D2FE; padding: 20px; border-radius: var(--radius); margin-bottom: 30px; }
-        .auth-box input { width: 100%; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; margin-top: 5px; outline: none; }
+        .nav-item {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.6);
+            transition: 0.3s;
+            font-size: 20px;
+        }
 
-        /* SECTIONS */
-        .section { display: none; animation: fadeIn 0.3s; }
-        .section.active { display: block; }
-        @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Tooltip for icons */
+        .nav-item { position: relative; }
+        .nav-item::after {
+            content: attr(data-title);
+            position: absolute;
+            left: 60px;
+            background: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.2s;
+            z-index: 200;
+        }
+        .nav-item:hover::after { opacity: 1; left: 65px; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
+        
+        .header-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: var(--text-main); }
 
         /* CARDS */
-        .card { background: var(--card-bg); padding: 25px; border-radius: var(--radius); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card h3 { margin-top: 0; margin-bottom: 20px; color: #1F2937; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); margin-bottom: 20px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
 
-        /* DASHBOARD STATS */
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .stat-card { background: #F9FAFB; padding: 20px; border-radius: var(--radius); text-align: center; border: 1px solid #E5E7EB; }
-        .stat-val { font-size: 24px; font-weight: 700; color: var(--primary); margin: 10px 0; }
-        
-        /* FORMS */
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #4B5563; margin-bottom: 6px; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; font-family: inherit; outline: none; transition: border 0.2s; }
-        .form-group input:focus { border-color: var(--primary); }
+        /* STATS GRID */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .stat-card { background: #F9FAFB; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #E5E7EB; }
+        .stat-val { font-size: 20px; font-weight: 700; color: var(--primary); margin-top: 5px; }
+        .stat-label { font-size: 12px; color: #6B7280; }
 
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        /* INPUTS */
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; margin-top: 5px; margin-bottom: 15px; font-family: inherit; }
+        label { font-size: 12px; font-weight: 600; color: #4B5563; }
 
         /* BUTTONS */
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
-        .btn-primary { background: #10B981; width: 100%; } /* Green */
-        .btn-primary:hover { background: #059669; }
-        
-        .btn-blue { background: var(--primary); }
-        .btn-danger { background: #EF4444; }
-        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn { padding: 12px; width: 100%; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; color: white; background: var(--primary); transition: 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-green { background: #10B981; }
+        .btn-red { background: #EF4444; }
 
-        /* TABLES & LISTS */
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #F9FAFB; border-radius: 8px; margin-bottom: 10px; border: 1px solid #E5E7EB; }
+        /* LIST ITEMS */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F3F4F6; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge.pending { background: #FEF3C7; color: #D97706; }
+
+        /* SECTIONS */
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        /* AUTH OVERLAY */
+        #auth-overlay { position: fixed; inset: 0; background: #F3F4F6; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: white; padding: 30px; border-radius: 20px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <div class="nav-item active" onclick="nav('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</div>
-        <div class="nav-item" onclick="nav('config')"><i class="fa-solid fa-sliders"></i> Configuration</div>
-        <div class="nav-item" onclick="nav('users')"><i class="fa-solid fa-users"></i> Users</div>
-        <div class="nav-item" onclick="nav('tasks')"><i class="fa-solid fa-list-check"></i> Tasks</div>
-        <div class="nav-item" onclick="nav('withdrawals')"><i class="fa-solid fa-money-bill-transfer"></i> Withdrawals</div>
-        <div class="nav-item" onclick="nav('broadcast')"><i class="fa-solid fa-bullhorn"></i> Broadcast</div>
+    <!-- LOGIN SCREEN -->
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2 style="margin-top:0; color:var(--primary);">Admin Login</h2>
+            <input type="password" id="password" placeholder="Enter Password (123)">
+            <button class="btn" onclick="login()">Access Panel</button>
+        </div>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- COMPACT SIDEBAR -->
+    <div class="sidebar">
+        <div class="nav-item active" data-title="Dashboard" onclick="nav('dashboard', this)">
+            <i class="fa-solid fa-chart-pie"></i>
+        </div>
+        <div class="nav-item" data-title="Configuration" onclick="nav('config', this)">
+            <i class="fa-solid fa-sliders"></i>
+        </div>
+        <div class="nav-item" data-title="Tasks" onclick="nav('tasks', this)">
+            <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="nav-item" data-title="Withdrawals" onclick="nav('withdrawals', this)">
+            <i class="fa-solid fa-money-check-dollar"></i>
+        </div>
+        <div class="nav-item" data-title="Broadcast" onclick="nav('broadcast', this)">
+            <i class="fa-solid fa-bullhorn"></i>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
     <div class="main-content">
         
-        <!-- GLOBAL PASSWORD -->
-        <div class="auth-box">
-            <label>🔑 Admin Password</label>
-            <input type="password" id="password" placeholder="Enter password to save/edit..." value="123">
-        </div>
-
         <!-- 1. DASHBOARD -->
         <div id="dashboard" class="section active">
+            <div class="header-title">Dashboard</div>
             <div class="card">
-                <h3>Overview</h3>
+                <h3>Real-Time Overview</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div>Total Users</div>
-                        <div class="stat-val" id="total-users">-</div>
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-val" id="st-users">...</div>
                     </div>
                     <div class="stat-card">
-                        <div>Pending Requests</div>
-                        <div class="stat-val" id="pending-req">-</div>
+                        <div class="stat-label">Pending Requests</div>
+                        <div class="stat-val" id="st-pending">...</div>
                     </div>
                     <div class="stat-card">
-                        <div>Total Payout</div>
-                        <div class="stat-val" id="total-paid">-</div>
+                        <div class="stat-label">Total Paid ($)</div>
+                        <div class="stat-val" id="st-paid">...</div>
                     </div>
                 </div>
-                <button class="btn btn-blue" onclick="loadStats()" style="margin-top:20px;">Refresh Stats</button>
+                <button class="btn" style="margin-top:20px; background:#1F2937;" onclick="loadRealData()">🔄 Refresh Data</button>
             </div>
         </div>
 
         <!-- 2. CONFIGURATION -->
         <div id="config" class="section">
+            <div class="header-title">Settings</div>
             <div class="card">
-                <h3>Core Configuration</h3>
-                
-                <div class="row">
-                    <div class="form-group">
-                        <label>Currency Name</label>
-                        <input id="currencyName" value="Birr">
-                    </div>
-                    <div class="form-group">
-                        <label>Min Withdraw</label>
-                        <input id="minWithdraw" type="number" value="10">
-                    </div>
-                </div>
+                <label>Welcome Message</label>
+                <textarea id="welcomeText" rows="3"></textarea>
 
-                <div class="row">
-                    <div class="form-group">
-                        <label>Ads Per Day</label>
-                        <input id="dailyLimit" type="number" value="25">
+                <label>Welcome Image URL</label>
+                <input id="welcomeImg">
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div>
+                        <label>Ad Reward ($)</label>
+                        <input id="adReward" type="number" step="0.001">
                     </div>
-                    <div class="form-group">
-                        <label>Reward per Ad</label>
-                        <input id="adReward" type="number" value="5">
+                    <div>
+                        <label>Min Withdraw ($)</label>
+                        <input id="minWithdraw" type="number" step="0.01">
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="form-group">
-                        <label>Referrer Bonus</label>
-                        <input id="refBonus" type="number" value="25">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div>
+                        <label>Ref Bonus ($)</label>
+                        <input id="refBonus" type="number" step="0.001">
                     </div>
-                    <div class="form-group">
-                        <label>Req Invites (to Withdraw)</label>
-                        <input id="minInvites" type="number" value="1">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Admin Chat ID</label>
-                    <input id="adminId" value="6941014837">
-                </div>
-
-                <div class="form-group">
-                    <label>Bot Link</label>
-                    <input id="botLink" value="https://t.me/Beshbesh_Bot">
-                </div>
-
-                <div class="form-group">
-                    <label>Mini App URL</label>
-                    <input id="appUrl" value="https://besh.onrender.com">
-                </div>
-
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                <h3>Text & Messages</h3>
-
-                <div class="form-group">
-                    <label>Welcome Message</label>
-                    <textarea id="welcomeText" rows="4">Hi {name}! Welcome to Besh Besh.</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Share Text (Invite)</label>
-                    <textarea id="shareText" rows="2">Join Besh Besh and earn 25 Birr!</textarea>
-                </div>
-
-                <div class="row">
-                    <div class="form-group">
-                        <label>Welcome Image URL</label>
-                        <input id="welcomeImg">
-                    </div>
-                    <div class="form-group">
-                        <label>Button Text</label>
-                        <input id="btnText" value="🚀 Open App">
+                    <div>
+                        <label>Daily Ad Limit</label>
+                        <input id="dailyLimit" type="number">
                     </div>
                 </div>
 
-                <button class="btn btn-primary" onclick="saveConfig()">Save Settings</button>
+                <label>Channel Link</label>
+                <input id="botLink">
+
+                <button class="btn btn-green" onclick="saveSettings()">💾 Save Changes</button>
             </div>
         </div>
 
-        <!-- 3. USERS -->
-        <div id="users" class="section">
-            <div class="card">
-                <h3>User Management</h3>
-                <div class="form-group" style="display:flex; gap:10px;">
-                    <input id="search-id" placeholder="Enter User ID">
-                    <button class="btn btn-blue" onclick="searchUser()">Search</button>
-                </div>
-                <div id="user-result" style="margin-top:20px;"></div>
-            </div>
-        </div>
-
-        <!-- 4. TASKS -->
+        <!-- 3. TASKS -->
         <div id="tasks" class="section">
+            <div class="header-title">Task Manager</div>
             <div class="card">
-                <h3>Manage Tasks</h3>
-                <div class="form-group">
-                    <label>Task Name</label>
-                    <input id="t-name">
-                </div>
-                <div class="form-group">
-                    <label>Reward</label>
-                    <input id="t-reward" type="number">
-                </div>
-                <div class="form-group">
-                    <label>Link / Channel</label>
-                    <input id="t-link">
-                </div>
-                <button class="btn btn-primary" onclick="addTask()">Add Task</button>
+                <h3>Add New Task</h3>
+                <input id="t-title" placeholder="Title (e.g. Join Channel)">
+                <input id="t-reward" type="number" placeholder="Reward (e.g. 0.05)">
+                <input id="t-link" placeholder="https://t.me/...">
+                <button class="btn" onclick="addTask()">Add Task</button>
             </div>
-
             <div class="card">
-                <h3>Existing Tasks</h3>
-                <div id="task-list">
-                    <!-- Tasks Loaded Here -->
-                </div>
+                <h3>Active Tasks</h3>
+                <div id="task-list">Loading...</div>
             </div>
         </div>
 
-        <!-- 5. WITHDRAWALS -->
+        <!-- 4. WITHDRAWALS -->
         <div id="withdrawals" class="section">
+            <div class="header-title">Withdrawals</div>
             <div class="card">
-                <h3>Pending Withdrawals</h3>
-                <button class="btn btn-blue" onclick="loadWithdrawals()">Load</button>
-                <div id="withdrawal-list" style="margin-top:20px;"></div>
+                <button class="btn" onclick="loadWithdrawals()">🔄 Load Pending Requests</button>
+                <div id="w-list" style="margin-top:15px;"></div>
             </div>
         </div>
 
-        <!-- 6. BROADCAST -->
+        <!-- 5. BROADCAST -->
         <div id="broadcast" class="section">
+            <div class="header-title">Broadcast</div>
             <div class="card">
-                <h3>📢 Broadcast</h3>
-                
-                <div class="form-group">
-                    <label>Target</label>
-                    <select id="bc-target">
-                        <option value="all">All Users</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Message</label>
-                    <textarea id="bc-msg" rows="4"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Image URL (Optional)</label>
-                    <input id="bc-img">
-                </div>
-
-                <div class="row">
-                    <div class="form-group">
-                        <label>Btn Text</label>
-                        <input id="bc-btn-txt">
-                    </div>
-                    <div class="form-group">
-                        <label>Btn Link</label>
-                        <input id="bc-btn-link">
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" onclick="sendBroadcast()">Send</button>
+                <label>Message</label>
+                <textarea id="bc-msg" rows="4"></textarea>
+                <label>Image URL (Optional)</label>
+                <input id="bc-img">
+                <button class="btn btn-green" onclick="sendBroadcast()">🚀 Send to All Users</button>
             </div>
         </div>
 
@@ -287,97 +245,137 @@
 
     <script>
         const API = '/api/bot';
+        let PASS = "";
 
-        // Navigation
-        function nav(id) {
+        // UI Logic
+        function nav(id, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            el.classList.add('active');
         }
 
-        function getPass() { return document.getElementById('password').value; }
-
-        // --- API CALLS ---
-
-        async function loadStats() {
-            // Placeholder: Fetch stats from DB
-            document.getElementById('total-users').innerText = '1,204';
-            document.getElementById('pending-req').innerText = '5';
-            document.getElementById('total-paid').innerText = '4,500 Br';
-        }
-
-        async function saveConfig() {
-            const data = {
-                currency: document.getElementById('currencyName').value,
-                minWithdraw: parseFloat(document.getElementById('minWithdraw').value),
-                dailyLimit: parseInt(document.getElementById('dailyLimit').value),
-                adReward: parseFloat(document.getElementById('adReward').value),
-                refBonus: parseFloat(document.getElementById('refBonus').value),
-                minInvites: parseInt(document.getElementById('minInvites').value),
-                adminId: document.getElementById('adminId').value,
-                botLink: document.getElementById('botLink').value,
-                appUrl: document.getElementById('appUrl').value,
-                welcomeText: document.getElementById('welcomeText').value,
-                shareText: document.getElementById('shareText').value,
-                welcomeImg: document.getElementById('welcomeImg').value,
-                btnText: document.getElementById('btnText').value
-            };
-
+        // --- AUTH & DATA ---
+        async function login() {
+            PASS = document.getElementById('password').value;
             const res = await fetch(API, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action: 'admin_action', type: 'save_settings', password: getPass(), data })
+                body: JSON.stringify({ action: 'admin_action', type: 'get_settings', password: PASS })
             });
-            alert((await res.json()).success ? "Settings Saved!" : "Error/Wrong Password");
+
+            if(res.ok) {
+                const data = await res.json();
+                if(data.error) return alert("Wrong Password");
+                
+                document.getElementById('auth-overlay').style.display = 'none';
+                populateConfig(data);
+                loadRealData();
+            } else {
+                alert("Server Error");
+            }
         }
 
+        // --- 1. LOAD REAL DATA ---
+        async function loadRealData() {
+            const res = await fetch(API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'admin_action', type: 'get_stats', password: PASS })
+            });
+            const d = await res.json();
+            
+            document.getElementById('st-users').innerText = d.totalUsers || 0;
+            document.getElementById('st-pending').innerText = d.pendingWithdrawals || 0;
+            document.getElementById('st-paid').innerText = (d.totalPaid || 0).toFixed(2);
+        }
+
+        // --- 2. CONFIGURATION ---
+        function populateConfig(data) {
+            const fields = ['welcomeText', 'welcomeImg', 'adReward', 'minWithdraw', 'refBonus', 'botLink'];
+            fields.forEach(f => {
+                if(document.getElementById(f)) document.getElementById(f).value = data[f] || '';
+            });
+        }
+
+        async function saveSettings() {
+            const data = {
+                welcomeText: document.getElementById('welcomeText').value,
+                welcomeImg: document.getElementById('welcomeImg').value,
+                adReward: document.getElementById('adReward').value,
+                minWithdraw: document.getElementById('minWithdraw').value,
+                refBonus: document.getElementById('refBonus').value,
+                botLink: document.getElementById('botLink').value,
+            };
+            await apiCall('save_settings', { data });
+            alert("Settings Saved!");
+        }
+
+        // --- 3. TASKS ---
         async function addTask() {
             const task = {
-                id: 't' + Date.now(),
-                title: document.getElementById('t-name').value,
-                reward: parseFloat(document.getElementById('t-reward').value),
+                id: Date.now().toString(),
+                title: document.getElementById('t-title').value,
+                reward: document.getElementById('t-reward').value,
                 link: document.getElementById('t-link').value
             };
-            // Save to DB (Implement backend logic)
-            alert("Task Added (Frontend Only - Connect Backend)");
-            renderTask(task);
+            await apiCall('add_task', { task });
+            alert("Task Added!");
+            loadTasks(); // Refresh list
         }
 
-        function renderTask(t) {
-            const div = document.createElement('div');
-            div.className = 'list-item';
-            div.innerHTML = `
-                <div><b>${t.title}</b> (${t.reward})</div>
-                <div>
-                    <button class="btn btn-sm" style="background:#FBBF24; color:black;">Edit</button>
-                    <button class="btn btn-sm btn-danger">Del</button>
-                </div>
-            `;
-            document.getElementById('task-list').appendChild(div);
+        // --- 4. WITHDRAWALS ---
+        async function loadWithdrawals() {
+            const res = await apiCall('get_withdrawals');
+            const list = document.getElementById('w-list');
+            list.innerHTML = "";
+            
+            if(!res.withdrawals || res.withdrawals.length === 0) {
+                list.innerHTML = "<p style='text-align:center; color:#888;'>No pending requests.</p>";
+                return;
+            }
+
+            res.withdrawals.forEach(w => {
+                list.innerHTML += `
+                <div class="list-item">
+                    <div>
+                        <b>${w.method}</b> - ${w.amount}$<br>
+                        <small>${w.account}</small><br>
+                        <small>ID: ${w.userId}</small>
+                    </div>
+                    <div>
+                        <button class="badge pending" onclick="pay('${w.userId}', ${w.amount})">Pay</button>
+                    </div>
+                </div>`;
+            });
         }
 
+        async function pay(uid, amt) {
+            if(!confirm("Mark as Paid?")) return;
+            await apiCall('approve_withdraw', { userId: uid, amount: amt });
+            alert("Marked as Paid!");
+            loadWithdrawals();
+        }
+
+        // --- 5. BROADCAST ---
         async function sendBroadcast() {
-            if(!confirm("Send to all users?")) return;
+            if(!confirm("Send to EVERYONE?")) return;
+            const res = await apiCall('broadcast', {
+                message: document.getElementById('bc-msg').value,
+                image: document.getElementById('bc-img').value
+            });
+            alert(`Sent to ${res.sent} users`);
+        }
+
+        // Helper
+        async function apiCall(type, payload = {}) {
             const res = await fetch(API, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    action: 'admin_action', 
-                    type: 'broadcast', 
-                    password: getPass(),
-                    message: document.getElementById('bc-msg').value,
-                    image: document.getElementById('bc-img').value,
-                    btnText: document.getElementById('bc-btn-txt').value,
-                    btnLink: document.getElementById('bc-btn-link').value
-                })
+                body: JSON.stringify({ action: 'admin_action', type, password: PASS, ...payload })
             });
-            alert("Broadcast Sent!");
+            return await res.json();
         }
-
-        // Init
-        loadStats();
     </script>
 </body>
 </html>
