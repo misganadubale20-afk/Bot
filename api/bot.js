@@ -1,20 +1,21 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 // =======================================================
-// 👇 YOUR CONFIGURATION (Hardcoded as requested) 👇
+// 👇 YOUR CONFIGURATION 👇
 // =======================================================
 const TOKEN = "8529929285:AAHwfWLGT7WKSyuZn_Zybs0PWx6a-FjLddI"; 
-const ADMIN_ID = "6464599036"; 
+const ADMIN_ID = "6464599036"; // Your ID for withdrawal alerts
 const WEBAPP_URL = "https://botxx.vercel.app"; 
 
-// Database Config
+// Custom Database Config
 const DB_URL = "https://data-myfa.vercel.app/api/db/bot";
 const DB_KEY = "QLE3KvEiqW29j269";
 
-// Password to access https://botxx.vercel.app/admin.html
+// Password for admin.html
 const ADMIN_PASSWORD = "123"; 
 // =======================================================
 
+// Initialize Bot (Polling False for Vercel)
 const bot = new TelegramBot(TOKEN, { polling: false });
 
 // --- HELPER: Database Connection ---
@@ -34,43 +35,86 @@ async function callDB(endpoint, method = "GET", data = null) {
     }
 }
 
-// --- SERVERLESS HANDLER ---
+// --- MAIN SERVERLESS HANDLER ---
 export default async function handler(req, res) {
     try {
         const body = req.body;
 
-        // 1. Handle Admin Panel Actions (from admin.html)
+        // ------------------------------------------------
+        // 1. ADMIN PANEL ACTIONS (from admin.html)
+        // ------------------------------------------------
         if (req.method === 'POST' && body.action === 'admin_action') {
-            if(body.password !== ADMIN_PASSWORD) return res.status(401).json({error: "Wrong Password"});
             
+            // Security Check
+            if(body.password !== ADMIN_PASSWORD) {
+                return res.status(401).json({error: "Wrong Password"});
+            }
+
+            // A. Get Settings
             if(body.type === 'get_settings') {
                 let s = await callDB('/config/settings');
                 return res.json(s || getDefaultSettings());
             }
+
+            // B. Save Settings
             if(body.type === 'save_settings') {
                 await callDB('/config/settings', 'POST', body.data);
                 return res.json({success: true});
             }
+
+            // C. Broadcast Message
             if(body.type === 'broadcast') {
                 const list = await callDB('/config/user_list') || { ids: [] };
+                
+                // Construct Button (if provided)
+                const opts = { parse_mode: 'HTML' };
+                if(body.btnText && body.btnLink) {
+                    opts.reply_markup = {
+                        inline_keyboard: [[{ text: body.btnText, url: body.btnLink }]]
+                    };
+                }
+
                 let count = 0;
+                // Loop through all users
                 for(const id of list.ids) {
-                    try { await bot.sendMessage(id, body.message, {parse_mode: 'HTML'}); count++; } catch(e){}
+                    try {
+                        if(body.image) {
+                            await bot.sendPhoto(id, body.image, { caption: body.message, ...opts });
+                        } else {
+                            await bot.sendMessage(id, body.message, opts);
+                        }
+                        count++;
+                    } catch(e) {
+                        // User blocked bot, ignore
+                    }
                 }
                 return res.json({sent: count});
             }
         }
 
-        // 2. Handle Withdrawal Requests (from index.html)
+        // ------------------------------------------------
+        // 2. WITHDRAWAL REQUESTS (from index.html)
+        // ------------------------------------------------
         if (req.method === 'POST' && body.action === 'withdraw') {
-            const msg = `<b>💰 New Withdrawal Request</b>\n\n👤 ${body.name}\n🆔 <code>${body.userId}</code>\n💵 $${body.amount}\n💳 ${body.method}\n🔢 ${body.account}`;
+            const msg = `
+<b>💰 New Withdrawal Request</b>
+
+👤 <b>User:</b> ${body.name}
+🆔 <b>ID:</b> <code>${body.userId}</code>
+--------------------------------
+💵 <b>Amount:</b> $${body.amount}
+💳 <b>Method:</b> ${body.method}
+🔢 <b>Account:</b> <code>${body.account}</code>
+            `;
             
-            // Send alert to YOUR Admin ID
+            // Send alert to YOUR Admin Telegram ID
             await bot.sendMessage(ADMIN_ID, msg, {parse_mode: 'HTML'});
             return res.status(200).send('OK');
         }
 
-        // 3. Handle Telegram Bot Logic (Webhooks)
+        // ------------------------------------------------
+        // 3. TELEGRAM BOT LOGIC (Webhooks)
+        // ------------------------------------------------
         if (req.method === 'POST' && body.message) {
             await handleTelegramMessage(body.message);
         }
@@ -79,7 +123,7 @@ export default async function handler(req, res) {
         console.error("Handler Error:", e);
     }
     
-    // Always return 200 to Telegram
+    // Always return 200 OK to Telegram
     res.status(200).send('OK');
 }
 
@@ -90,15 +134,12 @@ async function handleTelegramMessage(msg) {
     const userId = msg.from.id.toString();
     const name = msg.from.first_name || "User";
 
-    // 1. Load Settings from DB (or use defaults)
+    // 1. Load Settings (or defaults)
     let settings = await callDB('/config/settings');
-    if (!settings) {
-        settings = getDefaultSettings();
-        // Save defaults to DB so Admin panel works immediately
-        await callDB('/config/settings', 'POST', settings); 
-    }
+    if (!settings) settings = getDefaultSettings();
 
     if (text.startsWith('/start')) {
+        
         // A. Save User ID for Broadcasts
         let list = await callDB('/config/user_list');
         if(!list) list = { ids: [] };
@@ -109,27 +150,30 @@ async function handleTelegramMessage(msg) {
 
         // B. Check/Create User Profile
         let user = await callDB(`/users/${userId}`);
+        
         if (!user) {
-            // Referral Logic
-            const refId = text.split(' ')[1];
+            // --- Referral Logic ---
+            const refId = text.split(' ')[1]; // Extract ID after /start
+            
             if (refId && refId !== userId) {
                 let refUser = await callDB(`/users/${refId}`);
                 if (refUser) {
-                    const bonus = parseFloat(settings.referralBonus) || 0.01;
+                    const bonus = parseFloat(settings.refBonus) || 0.01; // Use setting or default
+                    
+                    // Update Referrer
                     refUser.balance = (refUser.balance || 0) + bonus;
                     refUser.referrals = (refUser.referrals || 0) + 1;
                     
-                    // Save Referrer
                     await callDB(`/users/${refId}`, 'POST', refUser);
                     
                     // Notify Referrer
                     try { 
-                        await bot.sendMessage(refId, `🎉 *Referral Bonus!*\n\n${name} joined.\n+$${bonus} added!`, {parse_mode:'Markdown'}); 
+                        await bot.sendMessage(refId, `🎉 *New Referral!*\n\n${name} joined using your link.\n+$${bonus} added!`, {parse_mode:'Markdown'}); 
                     } catch(e){}
                 }
             }
 
-            // Create New User
+            // --- Create New User ---
             await callDB(`/users/${userId}`, 'POST', {
                 id: userId,
                 firstName: name,
@@ -137,47 +181,50 @@ async function handleTelegramMessage(msg) {
                 adCount: 0,
                 referrals: 0,
                 bonusTasks: [],
-                history: [],
                 joinedAt: new Date().toISOString()
             });
         }
 
         // C. Send Welcome Message
+        const welcomeText = settings.welcomeText.replace('{name}', name);
+        const btnText = settings.btnText || "🚀 Open App";
+        
         const opts = {
-            caption: settings.welcomeText.replace('{name}', name),
+            caption: welcomeText,
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: "🚀 Open App", web_app: { url: settings.appUrl } }], // Uses settings.appUrl
-                    [{ text: "📢 Join Channel", url: settings.channelUrl }]
+                    [{ text: btnText, web_app: { url: settings.appUrl } }],
+                    [{ text: "📢 Join Channel", url: settings.botLink }] // Using botLink field for channel or support
                 ]
             }
         };
 
-        // Send Photo if URL exists, otherwise Message
-        if(settings.imageUrl && settings.imageUrl.startsWith('http')) {
+        // Send Photo if available
+        if(settings.welcomeImg && settings.welcomeImg.startsWith('http')) {
             try {
-                await bot.sendPhoto(chatId, settings.imageUrl, opts);
+                await bot.sendPhoto(chatId, settings.welcomeImg, opts);
             } catch(e) {
-                // Fallback if image fails
-                await bot.sendMessage(chatId, opts.caption, opts);
+                // Fallback to text if image error
+                await bot.sendMessage(chatId, welcomeText, opts);
             }
         } else {
-            await bot.sendMessage(chatId, opts.caption, opts);
+            await bot.sendMessage(chatId, welcomeText, opts);
         }
     }
 }
 
-// Default settings if DB is empty
+// Defaults
 function getDefaultSettings() {
     return {
-        welcomeText: "Hi {name}! \n\n👇 Click below to start earning:",
-        imageUrl: "https://cdn-icons-png.flaticon.com/512/2504/2504936.png", // Safe default image
-        appUrl: WEBAPP_URL, // Uses your Vercel URL
-        channelUrl: "https://t.me/BasicTouchPro",
-        adZoneId: "YOUR_MONETAG_ZONE_ID",
-        adReward: 0.001,
-        minWithdraw: 0.10,
-        referralBonus: 0.01
+        welcomeText: "Hi {name}! Welcome to Besh Besh.",
+        welcomeImg: "https://img.freepik.com/free-vector/hand-holding-phone-with-coins_23-2148094669.jpg",
+        appUrl: WEBAPP_URL,
+        botLink: "https://t.me/Beshbesh_Bot",
+        adReward: 5,
+        refBonus: 25,
+        minWithdraw: 10,
+        currency: "Br",
+        btnText: "🚀 Open App"
     };
 }
